@@ -19,27 +19,42 @@ def sample_order_and_batch() -> Tuple[Batch, Order]:
 
 def test_allocate_order_to_batch(sample_order_and_batch:Tuple[Batch, Order]):
     ex_batch, ex_order = sample_order_and_batch
-    ex_batch.allocate_stock(ex_order)
+    ex_batch.allocate_stock(ex_order.search_order_line(ex_batch.sku))
     assert ex_batch.available_quantity == 20
 
 def test_can_not_allocate_order_to_batch_if_not_available(sample_order_and_batch:Tuple[Batch, Order]):
     ex_batch, ex_order = sample_order_and_batch
     ex_order.order_lines[0].quantity = 31
-    ex_batch.allocate_stock(ex_order)
+    ex_batch.allocate_stock(ex_order.search_order_line(ex_batch.sku))
     assert ex_batch.available_quantity == 30
 
-def test_allocate_order_to_batch_if_already_allocated(sample_order_and_batch:Tuple[Batch, Order]):
+def test_allocate_order_to_batch_if_already_allocated_idempotent(sample_order_and_batch:Tuple[Batch, Order]):
     ex_batch, ex_order = sample_order_and_batch
     for _ in range(2):
-        ex_batch.allocate_stock(ex_order)
+        ex_batch.allocate_stock(ex_order.search_order_line(ex_batch.sku))
 
     assert ex_batch.available_quantity == 20
     
 def test_deallocate_order_line_from_batch_if_already_allocated(sample_order_and_batch:Tuple[Batch, Order]):
     ex_batch, ex_order = sample_order_and_batch
-    ex_batch.allocate_stock(ex_order)
+    ex_batch.allocate_stock(ex_order.search_order_line(ex_batch.sku))
     assert ex_batch.available_quantity == 20
     order_line_red_chair = ex_order.order_lines[0]
     ex_batch.deallocate_stock(order_reference=order_line_red_chair.parent_order_reference, order_line_sku=order_line_red_chair.sku) 
     assert ex_batch.available_quantity == 30
+    ex_batch._orders == []
+    order_line_red_chair.parent_batch = None
     #TODO: Add more validations
+
+def test_do_not_deallocate_order_line_if_not_already_allocated(sample_order_and_batch:Tuple[Batch, Order]):
+    ex_batch, ex_order = sample_order_and_batch
+    order_line_red_chair = ex_order.order_lines[0]
+    ex_batch.deallocate_stock(order_reference=order_line_red_chair.parent_order_reference, order_line_sku=order_line_red_chair.sku)
+    assert ex_batch.available_quantity == 30
+    order_line_red_chair.parent_batch = None
+
+def test_do_not_allocate_if_no_matching_sku_found(sample_order_and_batch:Tuple[Batch, Order]):
+    ex_batch, ex_order = sample_order_and_batch
+    with pytest.raises(ValueError):
+        ex_batch.allocate_stock(ex_order.search_order_line(ex_batch.sku + 'platypus'))
+

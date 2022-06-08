@@ -49,6 +49,12 @@ class Order:
     def attach_order_line(self, order_line: OrderLine):
         self.order_lines.append(order_line)
         order_line.assign_parent_order_reference(self)
+    def search_order_line(self, sku: str) -> Union[OrderLine,None]:
+        for order_line in self.order_lines:
+            if order_line.sku == sku:
+                return order_line
+        # TODO: Create custom error
+        raise ValueError("No order_line that matches specified SKU")
 
 class Batch:
     def __init__(self, reference, sku, quantity) -> None:
@@ -57,9 +63,9 @@ class Batch:
         self.quantity = quantity
         self.available_quantity = quantity
         self._orders: Union[List[OrderLine], None] = []
+        self._eta: str
 
-    def allocate_stock(self, order: Order):
-        for order_line in order.order_lines:
+    def allocate_stock(self, order_line: OrderLine) -> None:
             if order_line.verify_allocation(self) and not order_line.check_allocated(self):
                 #TODO: Deal with OrderLine switching to different Batch
                 order_line.assign_parent_batch(self)
