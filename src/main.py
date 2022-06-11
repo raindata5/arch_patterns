@@ -1,8 +1,14 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, List, Sequence, Union
+from enum import Enum, IntEnum
+import datetime as dt
+from functools import (
+    total_ordering,
+) 
 
-
+class ShippingState(IntEnum):
+    pass
 
 @dataclass
 class OrderLine:
@@ -56,14 +62,16 @@ class Order:
         # TODO: Create custom error
         raise ValueError("No order_line that matches specified SKU")
 
+@total_ordering
 class Batch:
-    def __init__(self, reference, sku, quantity) -> None:
+    def __init__(self, reference, sku, quantity, eta=dt.datetime(9999,1,1), arrived = False) -> None:
         self.reference = reference
         self.sku = sku
         self.quantity = quantity
         self.available_quantity = quantity
         self._orders: Union[List[OrderLine], None] = []
-        self._eta: str
+        self._eta: dt.datetime = eta
+        self._arrived: bool = arrived
 
     def allocate_stock(self, order_line: OrderLine) -> None:
             if order_line.verify_allocation(self) and not order_line.check_allocated(self):
@@ -77,3 +85,23 @@ class Batch:
             if orderline.sku == order_line_sku and orderline.parent_order_reference == order_reference:
                 self._orders.remove(orderline)
                 self.available_quantity += orderline.quantity
+    @property
+    def eta(self) -> dt.datetime:
+        if self.arrived:
+            return 1
+        return self._eta.timestamp()
+
+    @property
+    def arrived(self) -> bool:
+        return self._arrived
+
+    def __eq__(self, batch_object: Batch) -> bool:
+        return self.eta == batch_object.eta and self.arrived == batch_object.arrived
+
+    def __lt__(self, batch_object: Batch) -> bool:
+        return self.eta < batch_object.eta or self.arrived > batch_object.arrived
+
+def allocate_batch(order_line, batches: List[Batch]):
+    sorted_batches = sorted(batches, reverse=False)
+    best_batch = sorted_batches[0]
+    best_batch.allocate_stock(order_line=order_line)
