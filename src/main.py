@@ -62,15 +62,34 @@ class Order:
         # TODO: Create custom error
         raise ValueError("No order_line that matches specified SKU")
 
+class EtaDescriptor:
+    def __init__(self, name=None) -> None:
+        self._name = None
+
+    def __set_name__(self, owner, name):
+        self._name = name
+    
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+
+        tod_clock =  instance.__dict__[self._name]
+        timestamp = tod_clock.timestamp()
+        return timestamp
+
+    def __set__(self, instance, value):
+        instance.__dict__[self._name] = value
+
 @total_ordering
 class Batch:
+    eta = EtaDescriptor()
     def __init__(self, reference, sku, quantity, eta=dt.datetime(9999,1,1), arrived = False) -> None:
         self.reference = reference
         self.sku = sku
         self.quantity = quantity
         self.available_quantity = quantity
         self._orders: Union[List[OrderLine], None] = []
-        self._eta: dt.datetime = eta
+        self.eta = eta
         self._arrived: bool = arrived
 
     def allocate_stock(self, order_line: OrderLine) -> None:
@@ -80,16 +99,11 @@ class Batch:
                 self.available_quantity -= order_line.quantity
     
     def deallocate_stock(self, order_reference: str, order_line_sku: str):
-        #TODO: create total_ordering or just __eq__ method
+        #TODO: create total_ordering r just __eq__ method
         for orderline in self._orders:
             if orderline.sku == order_line_sku and orderline.parent_order_reference == order_reference:
                 self._orders.remove(orderline)
                 self.available_quantity += orderline.quantity
-    @property
-    def eta(self) -> dt.datetime:
-        if self.arrived:
-            return 1
-        return self._eta.timestamp()
 
     @property
     def arrived(self) -> bool:
@@ -99,7 +113,7 @@ class Batch:
         return self.eta == batch_object.eta and self.arrived == batch_object.arrived
 
     def __lt__(self, batch_object: Batch) -> bool:
-        return self.eta < batch_object.eta or self.arrived > batch_object.arrived
+        return self.arrived > batch_object.arrived or (self.arrived == batch_object.arrived and self.eta < batch_object.eta)
 
 def allocate_batch(order_line, batches: List[Batch]):
     sorted_batches = sorted(batches, reverse=False)
