@@ -5,6 +5,7 @@ from enum import Enum, IntEnum
 import datetime as dt
 from functools import (
     total_ordering,
+    partial
 ) 
 
 class ShippingState(IntEnum):
@@ -80,9 +81,13 @@ class EtaDescriptor:
     def __set__(self, instance, value):
         instance.__dict__[self._name] = value
 
+eta_descriptor = partial(EtaDescriptor, "eta")
+
 @total_ordering
 class Batch:
-    eta = EtaDescriptor()
+    eta = eta_descriptor()
+    # eta = EtaDescriptor() # Tradeoffs between the two?
+    
     def __init__(self, reference, sku, quantity, eta=dt.datetime(9999,1,1), arrived = False) -> None:
         self.reference = reference
         self.sku = sku
