@@ -1,0 +1,1 @@
+This repository serves just the purpose of practicing some architecture patterns

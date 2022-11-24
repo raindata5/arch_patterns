@@ -1,2 +1,5 @@
 ap_venv
 *.pyc
+*.egg-info/
+dist/
+build/
