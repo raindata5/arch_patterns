@@ -1,12 +1,15 @@
-from typing import Tuple
-from main import (
+from src.a_package.model import (
     Order,
     Batch,
     OrderLine,
-    allocate_batch,
     NoStock
 )
+from src.a_package.utils import (
+    allocate_batch,
+)
 
+
+from typing import Tuple
 import pytest
 import datetime as dt
 from datetime import timedelta
