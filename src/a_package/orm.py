@@ -60,6 +60,9 @@ batch_table = Table(
     Column(
         "arrived", Boolean,
     ),
+    Column(
+        "order_reference", String(40), ForeignKey("order.id")
+    ),
 )
 
 
@@ -67,16 +70,16 @@ mapper_registry.map_imperatively(
     model.Order,
     order_table,
     properties={
-        "order_lines": relationship(model.OrderLine, backref="order", order_by="order_line.c.sku")
+        "order_lines": relationship(model.OrderLine, backref="order", order_by="order.c.order_reference")
     }
 )
 
 mapper_registry.map_imperatively(
     model.Batch, 
     batch_table,
-    #     properties={
-    #     "orders": relationship(model.OrderLine, backref="batch")
-    # }
+        properties={
+        "orders": relationship(model.Order, backref="batch", order_by="order_line.c.sku")
+    }
 )
 
 mapper_registry.map_imperatively(
@@ -97,11 +100,10 @@ with Session(engine) as session:
         dict(sku="TASTELESS-LAMP", quantity=1)
     ]
     [ex_order.attach_order_line(ol) for ol in order_lines_params]
-    new_batch.allocate_stock(ex_order.search_order_line(new_batch.sku))
+    new_batch.allocate_stock(ex_order)
     session.add_all([new_batch])
     session.commit()
     stmt = select(model.Batch).where(model.Batch.reference == 'TKJ-23244')
     patrick = session.scalars(stmt).one()
     patrick: model.Batch
-    print(f"""{patrick}, {patrick.available_quantity}, {patrick.quantity}""")
     print(vars(patrick))

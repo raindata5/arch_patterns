@@ -32,7 +32,7 @@ class OrderLine:
 @dataclass
 class Order:
     order_reference: str
-    order_lines: list = field(default_factory=list)
+    order_lines: list[OrderLine] = field(default_factory=list)
 
     def __post_init__(self):
         if self.order_lines:
@@ -40,6 +40,9 @@ class Order:
 
     def attach_order_line(self, order_line_params:Dict):
         ol = OrderLine(**order_line_params, parent_order_reference=self.order_reference)
+        for order_ol in self.order_lines:
+            if order_ol.check_order_line_match(ol.parent_order_reference, ol.sku):
+                self.remove_order_line(order_ol)
         self.order_lines.append(ol)
         return ol
 
@@ -66,24 +69,30 @@ class Batch:
         self.sku = sku
         self.quantity = quantity
         self.available_quantity = quantity
-        self._orders: List[OrderLine]= []
+        self._orders: List[Order]= []
         self.eta = eta
         self.arrived: bool = arrived
-
-    def allocate_stock(self, order_line: OrderLine) -> None:
-            if order_line.verify_allocation(self) and not order_line.check_allocation_status(self):
+    #TODO: Consider adding an error here
+    def allocate_stock(self, order: Order) -> None:
+        if order in self._orders:
+            return None
+        for order_line in order.order_lines:
+            if order_line.verify_allocation(self):
                 #TODO: Deal with OrderLine switching to different Batch
-                self._orders.append(order_line)
+                self._orders.append(order)
                 self.available_quantity -= order_line.quantity
+                return None
+        raise ValueError("No matching order_line was found")
     
     def deallocate_stock(self, order_reference: str, order_line_sku: str):
         #TODO: create total_ordering r just __eq__ method
         # create order_line_match method as a descriptor
         # add generator
-        for orderline in self._orders:
-            if orderline.check_order_line_match(order_reference, order_line_sku):
-                self._orders.remove(orderline)
-                self.available_quantity += orderline.quantity
+        for order in self._orders:
+            if order.order_reference == order_reference:
+                returned_ol = order.search_order_line(order_line_sku)
+                self._orders.remove(order)
+                self.available_quantity += returned_ol.quantity
 
     def __eq__(self, batch_object: Batch) -> bool:
         # return self.eta == batch_object.eta and self.arrived == batch_object.arrived

@@ -3,3 +3,4 @@ ap_venv
 *.egg-info/
 dist/
 build/
+.vscode/

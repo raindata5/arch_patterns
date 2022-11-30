@@ -45,8 +45,8 @@ class EtaDescriptor:
 
 eta_descriptor = partial(EtaDescriptor, "eta")
 
-def allocate_batch(order_line, batches: List):
+def allocate_batch(order, batches: List):
     sorted_batches = sorted(batches, reverse=False)
-    next(b for b in sorted_batches if order_line.verify_allocation(b)  and not order_line.check_allocation_status(b) ) # Do we want this to fail or keep this check here?
+    # next(b for b in sorted_batches if order_line.verify_allocation(b)  and not order_line.check_allocation_status(b) ) # Do we want this to fail or keep this check here?
     best_batch = sorted_batches[0]
-    best_batch.allocate_stock(order_line=order_line)
+    best_batch.allocate_stock(order)
