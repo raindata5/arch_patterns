@@ -10,7 +10,6 @@ engine = create_engine("sqlite://", echo=True)
 
 mapper_registry = registry()
 
-#TODO: if PK is id how do I get order_lines on a batch connecting in the DB?
 order_line_table=Table(
     "order_line",
     mapper_registry.metadata,
