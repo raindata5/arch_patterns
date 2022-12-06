@@ -24,7 +24,7 @@ class SqlRepository(Repository):
         self.session.commit()
         return object
 
-    def get(self, class_object,class_object_column,  reference):
+    def get(self, class_object,class_object_column, reference):
         stmt = select(class_object).where(class_object_column == reference)
-        result=self.session.execute(statement=stmt)
-        return result.one
+        result=self.session.scalars(statement=stmt)
+        return result.first()
