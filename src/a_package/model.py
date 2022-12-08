@@ -23,7 +23,7 @@ class OrderLine:
         return False
 
     def check_allocation_status(self, batch: Batch):
-        for batch_ol in batch._orders:
+        for batch_ol in batch.orders:
             if batch_ol == self:
                 return True
         return False
@@ -69,17 +69,17 @@ class Batch:
         self.sku = sku
         self.quantity = quantity
         self.available_quantity = quantity
-        self._orders: List[Order]= []
+        self.orders: List[Order]= []
         self.eta = eta
         self.arrived: bool = arrived
     #TODO: Consider adding an error here
     def allocate_stock(self, order: Order) -> None:
-        if order in self._orders:
+        if order in self.orders:
             return None
         for order_line in order.order_lines:
             if order_line.verify_allocation(self):
                 #TODO: Deal with OrderLine switching to different Batch
-                self._orders.append(order)
+                self.orders.append(order)
                 self.available_quantity -= order_line.quantity
                 return None
         raise ValueError("No matching order_line was found")
@@ -88,10 +88,10 @@ class Batch:
         #TODO: create total_ordering r just __eq__ method
         # create order_line_match method as a descriptor
         # add generator
-        for order in self._orders:
+        for order in self.orders:
             if order.order_reference == order_reference:
                 returned_ol = order.search_order_line(order_line_sku)
-                self._orders.remove(order)
+                self.orders.remove(order)
                 self.available_quantity += returned_ol.quantity
 
     def __eq__(self, batch_object: Batch) -> bool:

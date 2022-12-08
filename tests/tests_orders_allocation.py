@@ -59,7 +59,7 @@ def test_deallocate_order_line_from_batch_if_already_allocated(sample_order_and_
     order_line_red_chair = next(ol for ol in ex_order.order_lines if ol.sku == "RED-CHAIR")
     ex_batch.deallocate_stock(order_reference=order_line_red_chair.parent_order_reference, order_line_sku=order_line_red_chair.sku) 
     assert ex_batch.available_quantity == 30
-    ex_batch._orders == []
+    ex_batch.orders == []
     #TODO: Add more validations
 
 def test_do_not_deallocate_order_line_if_not_already_allocated(sample_order_and_batch:Tuple[Batch, Order]):

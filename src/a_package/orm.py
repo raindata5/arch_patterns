@@ -77,7 +77,7 @@ mapper_registry.map_imperatively(
     model.Batch, 
     batch_table,
         properties={
-        "orders": relationship(model.Order, backref="batch", order_by="order_line.c.sku")
+        "orders": relationship(model.Order, backref="batch", order_by="order_line.c.sku", uselist=True)
     }
 )
 
@@ -91,18 +91,20 @@ mapper_registry.map_imperatively(
 
 mapper_registry.metadata.create_all(engine)
 
-with Session(engine) as session:
-    new_batch = model.Batch(reference='TKJ-23244', sku='RED-CHAIR', quantity=30, eta=dt.datetime.now(), arrived=False)
-    ex_order = model.Order(order_reference='TGL-23245')
-    order_lines_params = [
-        dict(sku="RED-CHAIR", quantity=10),
-        dict(sku="TASTELESS-LAMP", quantity=1)
-    ]
-    [ex_order.attach_order_line(ol) for ol in order_lines_params]
-    new_batch.allocate_stock(ex_order)
-    session.add_all([new_batch])
-    session.commit()
-    stmt = select(model.Batch).where(model.Batch.reference == 'TKJ-23244')
-    patrick = session.scalars(stmt).one()
-    patrick: model.Batch
-    print(vars(patrick))
+# with Session(engine) as session:
+#     new_batch = model.Batch(reference='TKJ-23244', sku='RED-CHAIR', quantity=30, eta=dt.datetime.now(), arrived=False)
+#     ex_order = model.Order(order_reference='TGL-23245')
+#     order_lines_params = [
+#         dict(sku="RED-CHAIR", quantity=10),
+#         dict(sku="TASTELESS-LAMP", quantity=1)
+#     ]
+#     [ex_order.attach_order_line(ol) for ol in order_lines_params]
+#     new_batch.allocate_stock(ex_order)
+#     session.add_all([new_batch])
+#     # session.commit()
+#     stmt = select(model.Batch).where(model.Batch.reference == 'TKJ-23244')
+#     patrick = session.scalars(stmt).one()
+#     patrick: model.Batch
+#     print(vars(patrick))
+#     print(patrick.orders)
+
