@@ -51,10 +51,16 @@ batch_table = Table(
         "reference", String(40), autoincrement=True
     ),
     Column(
+        "sku", String(40), autoincrement=True
+    ),
+    Column(
+        "available_quantity", Integer,
+    ),
+    Column(
         "quantity", Integer,
     ),
     Column(
-        "eta", DateTime,
+        "eta", DateTime, nullable=False
     ),
     Column(
         "arrived", Boolean,
@@ -69,7 +75,7 @@ mapper_registry.map_imperatively(
     model.Order,
     order_table,
     properties={
-        "order_lines": relationship(model.OrderLine, backref="order", order_by="order.c.order_reference")
+        "order_lines": relationship(model.OrderLine, backref="order", order_by="order_line.c.parent_order_reference")
     }
 )
 
@@ -77,7 +83,7 @@ mapper_registry.map_imperatively(
     model.Batch, 
     batch_table,
         properties={
-        "orders": relationship(model.Order, backref="batch", order_by="order_line.c.sku", uselist=True)
+        "orders": relationship(model.Order, backref="batch", order_by="order.c.id", uselist=True)
     }
 )
 

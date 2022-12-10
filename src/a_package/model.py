@@ -61,7 +61,7 @@ class Order:
 
 @total_ordering
 class Batch:
-    eta = utils.eta_descriptor()
+    # eta = utils.eta_descriptor()
     # eta = EtaDescriptor() # Tradeoffs between the two?
     
     def __init__(self, reference, sku, quantity, eta=dt.datetime(9999,1,1), arrived = False) -> None:
