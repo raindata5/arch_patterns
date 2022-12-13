@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, select
 import datetime as dt
 
 
-engine = create_engine("sqlite://", echo=True)
+engine = create_engine("sqlite+pysqlite:///:memory:", echo=True)
 
 mapper_registry = registry()
 
@@ -75,7 +75,7 @@ mapper_registry.map_imperatively(
     model.Order,
     order_table,
     properties={
-        "order_lines": relationship(model.OrderLine, backref="order", order_by="order_line.c.parent_order_reference")
+        "order_lines": relationship(model.OrderLine, backref="order", order_by="order_line.c.parent_order_reference", uselist=True)
     }
 )
 
