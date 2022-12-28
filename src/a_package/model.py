@@ -6,7 +6,6 @@ from functools import (
     total_ordering
 )
 from a_package import utils
-from a_package import model
 
 @dataclass(unsafe_hash=True)
 class OrderLine:

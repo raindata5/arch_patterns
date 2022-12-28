@@ -21,6 +21,7 @@ sqlalchemy = "*"
 fastapi = "*"
 uvicorn = {extras = ["standard"], version = "*"}
 architecture-patterns = {editable = true, path = "."}
+httpx = "*"
 
 [dev-packages]
 
