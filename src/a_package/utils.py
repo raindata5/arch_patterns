@@ -8,7 +8,7 @@ class CheckOrderLineMatch:
     """
     This callable object determines whether an orderline
     is identical to another and can be used as a standalone
-    function or as a method on a class through the descriptor protocol
+    function or as a method on a class through the descriptor protocol.
     """
     def __init__(self, name=None):
         self._name = None

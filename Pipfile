@@ -17,8 +17,10 @@ pytz = "==2022.1"
 tomli = "==2.0.1"
 "zope.interface" = "==5.4.0"
 build = "*"
-architecture-patterns = {editable = true, path = "."}
 sqlalchemy = "*"
+fastapi = "*"
+uvicorn = {extras = ["standard"], version = "*"}
+architecture-patterns = {editable = true, path = "."}
 
 [dev-packages]
 

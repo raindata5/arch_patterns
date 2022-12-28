@@ -1,0 +1,16 @@
+version: "3"
+services: 
+    architecture_patterns:
+        build: .
+        volumes:
+            - ./:/architecture_patterns
+        ports: 
+            - 8000:8000
+        entrypoint: ["pipenv", "run", "uvicorn", "src.a_package.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    postgres:
+      image: postgres
+      ports:
+          - 5435:5432
+      restart: always
+      environment:
+        POSTGRES_PASSWORD: example
