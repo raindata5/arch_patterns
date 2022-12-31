@@ -4,6 +4,8 @@ services:
         build: .
         volumes:
             - ./:/architecture_patterns
+            - /.git
+            - /.gitignore
         ports: 
             - 8000:8000
         entrypoint: ["pipenv", "run", "uvicorn", "src.a_package.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
@@ -14,3 +16,13 @@ services:
       restart: always
       environment:
         POSTGRES_PASSWORD: example
+    vault:
+        image: vault
+        ports:
+          - 8200:8200
+        environment:
+            - name=dev-vault
+            - cap-add=IPC_LOCK
+            - VAULT_DEV_ROOT_TOKEN_ID=dev-only-token
+        volumes:
+            - /config:/vault/config.d

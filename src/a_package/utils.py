@@ -4,6 +4,8 @@ from typing import List
 from functools import (
     partial
 )
+import uuid
+
 class CheckOrderLineMatch:
     """
     This callable object determines whether an orderline
@@ -50,3 +52,18 @@ def allocate_batch(order, batches: List):
     # next(b for b in sorted_batches if order_line.verify_allocation(b)  and not order_line.check_allocation_status(b) ) # Do we want this to fail or keep this check here?
     best_batch = sorted_batches[0]
     best_batch.allocate_stock(order)
+
+def random_suffix():
+    return uuid.uuid4().hex[:6]
+
+
+def random_sku(name=""):
+    return f"sku-{name}-{random_suffix()}"
+
+
+def random_batchref(name=""):
+    return f"batch-{name}-{random_suffix()}"
+
+
+def random_orderid(name=""):
+    return f"order-{name}-{random_suffix()}"

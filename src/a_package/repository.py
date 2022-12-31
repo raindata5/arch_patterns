@@ -30,3 +30,8 @@ class SqlRepository(Repository):
         stmt = select(class_object).where(class_object_column == reference)
         result=self.session.scalars(statement=stmt)
         return result.first()
+
+    def list(self, class_object,class_object_column):
+        stmt = select(class_object)
+        result=self.session.scalars(statement=stmt)
+        return result
