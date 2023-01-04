@@ -16,6 +16,6 @@ ENV LANG="C.UTF-8"
 
 RUN pipenv install -e .
 
-RUN pipenv shell
+# RUN pipenv shell
 
 ENTRYPOINT ["tail", "-f", "/dev/null"]
