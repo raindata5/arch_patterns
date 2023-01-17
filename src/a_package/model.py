@@ -6,6 +6,7 @@ from functools import (
     total_ordering
 )
 from a_package import utils
+from pydantic import BaseModel
 
 @dataclass(unsafe_hash=True)
 class OrderLine:
@@ -106,3 +107,10 @@ class Batch:
 class NoStock(Exception):
     """An exception expressing that there was an attempt to 
     assign an orderline to a batch with insufficient stock """
+
+
+class OrderReference(BaseModel):
+    order_reference: str
+
+class Sku(BaseModel):
+    sku: str
