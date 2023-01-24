@@ -23,6 +23,7 @@ uvicorn = {extras = ["standard"], version = "*"}
 architecture-patterns = {editable = true, path = "."}
 httpx = "*"
 requests = "*"
+psycopg2 = "*"
 
 [dev-packages]
 

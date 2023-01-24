@@ -8,12 +8,22 @@ services:
             - /.gitignore
         ports: 
             - 8000:8000
+        depends_on:
+            postgres:
+                condition: service_healthy
         entrypoint: ["pipenv", "run", "uvicorn", "src.a_package.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     postgres:
       image: postgres
       ports:
           - 5435:5432
       restart: always
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready", "-d", "postgres", "-U", "postgres",]
+        # test: ["pg_isready", "-U", "postgres"]
+        interval: 5s
+        timeout: 60s
+        retries: 5
+        start_period: 80s  
       environment:
         POSTGRES_PASSWORD: example
     vault:

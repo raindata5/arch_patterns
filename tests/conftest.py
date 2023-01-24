@@ -1,17 +1,17 @@
-from a_package import model
+from domain import model
 import datetime as dt
 import a_package.repository as repository
 import pytest
-from a_package import utils
+from domain import utils
 import logging
 import psycopg2
 from sqlalchemy.orm import sessionmaker
-from a_package import model
+from domain import model
 from sqlalchemy import create_engine
 import datetime as dt
-from a_package import utils
-from a_package.config import settings
-from a_package.orm import Session
+from domain import utils
+from entrypoints.config import settings
+from adapters.orm import Session
 
 engine = create_engine(f"postgresql://{settings.pg_oltp_api_user}:{settings.pg_oltp_api_password}@{settings.pg_oltp_api_host}:{settings.pg_oltp_api_port}", echo=True)
 
