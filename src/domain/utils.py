@@ -46,12 +46,14 @@ class EtaDescriptor:
         instance.__dict__[self._name] = value
 
 eta_descriptor = partial(EtaDescriptor, "eta")
-
-def allocate_batch(order, batches: List):
+from domain import model
+def allocate_batch(order, batches: List) -> model.Batch:
     sorted_batches = sorted(batches, reverse=False)
     # next(b for b in sorted_batches if order_line.verify_allocation(b)  and not order_line.check_allocation_status(b) ) # Do we want this to fail or keep this check here?
     best_batch = sorted_batches[0]
     best_batch.allocate_stock(order)
+    return best_batch
+
 
 def random_suffix():
     return uuid.uuid4().hex[:6]
