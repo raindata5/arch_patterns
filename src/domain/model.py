@@ -5,7 +5,7 @@ import datetime as dt
 from functools import (
     total_ordering
 )
-from a_package import utils
+from domain import utils
 from pydantic import BaseModel
 
 @dataclass(unsafe_hash=True)

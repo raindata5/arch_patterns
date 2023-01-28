@@ -1,5 +1,5 @@
 import abc
-from a_package import model
+from domain import model
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 

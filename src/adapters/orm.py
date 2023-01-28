@@ -1,12 +1,12 @@
 from sqlalchemy import Table, Column, Integer, String, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import registry, relationship, sessionmaker
 from sqlalchemy.sql import func
-from a_package import model
+from domain import model
 from sqlalchemy import create_engine, select
 import datetime as dt
 from sqlalchemy.pool import StaticPool
-from a_package import utils
-from a_package.config import settings
+from domain import utils
+from entrypoints.config import settings
 
 # https://docs.sqlalchemy.org/en/20/dialects/sqlite.html#using-a-memory-database-in-multiple-threads
 # engine = create_engine("sqlite+pysqlite:///:memory:", echo=True, connect_args={'check_same_thread':False},

@@ -1,4 +1,4 @@
-import a_package.repository as repository
+from adapters import repository as repository
 from typing import (
     List,
 )
@@ -64,6 +64,7 @@ def test_allocate_batch():
         repo
     )
     assert best_batch.reference == batch_nat.reference
+    assert best_batch.available_quantity == (best_batch.quantity - list_ol[0].quantity)
     assert repo.committed
 
 def test_allocate_stock_returns_404_no_sku_found():
@@ -75,17 +76,29 @@ def test_allocate_stock_returns_404_no_sku_found():
             model.OrderReference(order_reference=order_nat.order_reference),
             model.Sku(sku=list_ol[0].sku),
             repo
+        )
+    assert batch_nat.available_quantity == 30
+
+def test_allocate_stock_returns_no_stock():
+    batch_nat, order_nat, list_ol = sample_business_objects()
+    batch_nat.available_quantity -= 30
+    repo = FakeRepository([batch_nat], [order_nat,])
+    with pytest.raises(model.NoStock):
+        best_batch = services.allocate(
+            model.OrderReference(order_reference=order_nat.order_reference),
+            model.Sku(sku=list_ol[0].sku),
+            repo
         )   
+    
 
-def test_allocate_stock_returns_404_no_stock():
-    pass
-    # batch_nat, order_nat, list_ol = sample_business_objects()
-    # repo = FakeRepository([batch_nat], [order_nat,])
-    # list_ol[0].sku = 'fake_nat_sku'
-    # with pytest.raises(services.InvalidSkuReference):
-    #     best_batch = services.allocate(
-    #         model.OrderReference(order_reference=order_nat.order_reference),
-    #         model.Sku(sku=list_ol[0].sku),
-    #         repo
-    #     )   
+def test_allocate_order_to_batch_if_already_allocated_idempotent():
+    batch_nat, order_nat, list_ol = sample_business_objects()
+    repo = FakeRepository([batch_nat], [order_nat,])
+    for _ in range(2):
+        best_batch = services.allocate(
+        model.OrderReference(order_reference=order_nat.order_reference),
+        model.Sku(sku=list_ol[0].sku),
+        repo
+    )   
 
+    assert best_batch.available_quantity == 20

@@ -1,6 +1,6 @@
 from domain import model
 import datetime as dt
-import a_package.repository as repository
+from adapters import repository as repository
 import pytest
 from domain import utils
 import logging

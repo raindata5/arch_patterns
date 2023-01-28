@@ -29,28 +29,6 @@ def in_shipment_batch():
     ex_batch_in_shipment = Batch(reference='TKJ-23244', sku='RED-CHAIR', quantity=30, eta=dt.datetime.now(), arrived=False)
     ex_batch_arrived_long_eta = Batch(reference='TKJ-23244', sku='RED-CHAIR', quantity=30, eta=dt.datetime.now() + timedelta(60), arrived=True)
     return ex_batch_in_shipment, ex_batch_arrived_long_eta
-
-def test_allocate_order_to_batch(sample_order_and_batch:Tuple[Batch, Order]):
-    ex_batch, ex_order = sample_order_and_batch
-    ex_batch.allocate_stock(ex_order)
-    assert ex_batch.available_quantity == 20
-
-def test_can_not_allocate_order_to_batch_if_not_available(sample_order_and_batch:Tuple[Batch, Order]):
-    ex_batch, ex_order = sample_order_and_batch
-    ol_og = next(ol for ol in ex_order.order_lines if ol.sku == "RED-CHAIR")
-    ol_mod_params = dict(sku=ol_og.sku, quantity=ol_og.quantity + 50)
-    ol_mod = ex_order.attach_order_line(ol_mod_params)
-    # ex_order.remove_order_line(ol_og)
-    with pytest.raises(NoStock):
-        ex_batch.allocate_stock(ex_order)
-    assert ex_batch.available_quantity == 30
-
-def test_allocate_order_to_batch_if_already_allocated_idempotent(sample_order_and_batch:Tuple[Batch, Order]):
-    ex_batch, ex_order = sample_order_and_batch
-    for _ in range(2):
-        ex_batch.allocate_stock(ex_order)
-
-    assert ex_batch.available_quantity == 20
     
 def test_deallocate_order_line_from_batch_if_already_allocated(sample_order_and_batch:Tuple[Batch, Order]):
     ex_batch, ex_order = sample_order_and_batch
