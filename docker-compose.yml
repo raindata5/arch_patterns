@@ -11,7 +11,7 @@ services:
         depends_on:
             postgres:
                 condition: service_healthy
-        entrypoint: ["pipenv", "run", "uvicorn", "src.a_package.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+        entrypoint: ["pipenv", "run", "uvicorn", "src.entrypoints.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     postgres:
       image: postgres
       ports:

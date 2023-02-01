@@ -102,3 +102,14 @@ def test_allocate_order_to_batch_if_already_allocated_idempotent():
     )   
 
     assert best_batch.available_quantity == 20
+
+def test_do_not_allocate_if_no_matching_sku_found():
+    batch_nat, order_nat, list_ol = sample_business_objects()
+    order_nat.order_lines = []
+    repo = FakeRepository([batch_nat], [order_nat,])
+    with pytest.raises(ValueError) as ex:
+        services.allocate(
+            model.OrderReference(order_reference=order_nat.order_reference),
+            model.Sku(sku=list_ol[0].sku),
+            repo
+        )

@@ -3,18 +3,21 @@ from typing import (
     Union,
     Any
 )
+
 from fastapi import (
     FastAPI,
     status,
     HTTPException
 )
+
 from adapters.orm import Session
 import adapters.repository as repository
 import domain.model as model
 from service_layer.services import (
     allocate,
     InvalidOrderReference,
-    InvalidSkuReference
+    InvalidSkuReference,
+    add_batch
 )
 from domain.utils import (
     allocate_batch
@@ -38,7 +41,12 @@ def read_batch(batch_reference: str):
     queried_batch = sql_repo.get(model.Batch, model.Batch.reference, batch_reference)
     sql_repo.commit()
     return queried_batch
-    
+
+@app.post("batches",  status_code=status.HTTP_201_CREATED,)
+def add_batch_ep(batch_info: model.PreBatchInstance):
+    inserted_batch = add_batch(repo=sql_repo, **batch_info)
+    return inserted_batch
+
 @app.post("/allocate", status_code=status.HTTP_201_CREATED, )
 def allocate_batch_ep(order_reference: model.OrderReference, sku: model.Sku):
     #TODO: Allow the client to specify a sku

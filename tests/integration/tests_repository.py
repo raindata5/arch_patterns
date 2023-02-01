@@ -2,7 +2,7 @@ from sqlalchemy import Table, Column, Integer, String, ForeignKey, DateTime, Boo
 from sqlalchemy.orm import registry, relationship, Session
 from sqlalchemy.sql import func
 from domain import model
-from a_package import repository
+import adapters.repository as repository
 from adapters.orm import (
     engine
 )

@@ -46,12 +46,6 @@ def test_do_not_deallocate_order_line_if_not_already_allocated(sample_order_and_
     ex_batch.deallocate_stock(order_reference=order_line_red_chair.parent_order_reference, order_line_sku=order_line_red_chair.sku)
     assert ex_batch.available_quantity == 30
 
-def test_do_not_allocate_if_no_matching_sku_found(sample_order_and_batch:Tuple[Batch, Order]):
-    ex_batch, ex_order = sample_order_and_batch
-    ex_order.order_lines = []
-    with pytest.raises(ValueError) as ex:
-        ex_batch.allocate_stock(ex_order)
-
 def test_sortable_batches(sample_order_and_batch:Tuple[Batch, Order], in_shipment_batch:Tuple[Batch, Batch]):
     ex_batch, ex_order = sample_order_and_batch
     ex_batch_in_shipment, ex_batch_arrived_long_eta = in_shipment_batch

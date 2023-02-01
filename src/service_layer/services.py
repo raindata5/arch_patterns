@@ -1,3 +1,4 @@
+from domain import utils
 import domain.model as model
 import adapters.repository as repository
 from typing import (
@@ -43,3 +44,13 @@ def allocate(order_reference: model.OrderReference, sku: model.Sku, repo:Type[re
     finally:
         repo.commit()
     return best_batch
+
+
+def add_batch(sku, quantity, repo:Type[repository.Repository], eta=None, arrived=None,):
+    try:
+        batch_ref = utils.random_batchref("NaT")
+        batch_instance = model.Batch(batch_ref, sku, quantity)
+        repo.add(batch_instance)
+    finally :
+        repo.commit()
+    return batch_instance
