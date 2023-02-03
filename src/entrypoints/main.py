@@ -42,9 +42,9 @@ def read_batch(batch_reference: str):
     sql_repo.commit()
     return queried_batch
 
-@app.post("batches",  status_code=status.HTTP_201_CREATED,)
+@app.post("/batches",  status_code=status.HTTP_201_CREATED,)
 def add_batch_ep(batch_info: model.PreBatchInstance):
-    inserted_batch = add_batch(repo=sql_repo, **batch_info)
+    inserted_batch = add_batch(repo=sql_repo, sku=batch_info.sku, quantity=batch_info.quantity, arrived=batch_info.arrived, eta=batch_info.eta)
     return inserted_batch
 
 @app.post("/allocate", status_code=status.HTTP_201_CREATED, )

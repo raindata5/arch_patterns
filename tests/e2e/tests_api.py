@@ -85,3 +85,15 @@ def test_allocate_stock_returns_404_no_sku_found(return_base_sample_data, return
     text ={"detail":detail}
     text_str = json.dumps(text, separators=(',', ':'))
     assert res_text == text_str
+
+def test_add_batch_returns_201(get_sql_repo):
+    batch_body = dict(
+        sku="a_sku",
+        quantity=30,
+        arrived=False
+    )    
+    res = requests.post(f"{settings.api_url}/batches", json=batch_body)
+    assert res.status_code == 201
+    assert res.json()["arrived"] == False
+    assert res.json()["available_quantity"] == batch_body["quantity"]
+    assert res.json()["sku"] == batch_body["sku"]

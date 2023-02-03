@@ -113,3 +113,17 @@ def test_do_not_allocate_if_no_matching_sku_found():
             model.Sku(sku=list_ol[0].sku),
             repo
         )
+
+def test_add_batch():
+    batch_nat, order_nat, list_ol = sample_business_objects()
+    repo = FakeRepository(batches=[], orders=[order_nat,])
+    batch_ref=utils.random_batchref("batch")
+    inserted_batch = services.add_batch(
+        sku=batch_nat.sku,
+        quantity=batch_nat.quantity,
+        repo=repo,
+        ref=batch_ref
+    )
+    retrieved_batch = repo.get(model.Batch, model.Batch.reference, batch_ref)
+    assert retrieved_batch.reference == batch_ref
+    assert inserted_batch.sku == batch_nat.sku
