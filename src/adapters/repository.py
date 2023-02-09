@@ -26,6 +26,9 @@ class SqlRepository(Repository):
     def commit(self):
         self.session.commit()
 
+    def rollback(self):
+        self.session.rollback()
+
     def get(self, class_object,class_object_column, reference):
         stmt = select(class_object).where(class_object_column == reference)
         result=self.session.scalars(statement=stmt)
