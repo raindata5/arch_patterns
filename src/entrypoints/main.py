@@ -24,8 +24,9 @@ from domain.utils import (
 )
 import datetime as dt
 from sqlalchemy import select
-
-
+from adapters import (
+    uow
+)
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -51,7 +52,7 @@ def add_batch_ep(batch_info: model.PreBatchInstance):
 def allocate_batch_ep(order_reference: model.OrderReference, sku: model.Sku):
     #TODO: Allow the client to specify a sku
     try:
-        best_batch = allocate(order_reference, sku, sql_repo)
+        best_batch = allocate(order_reference, sku, sql_repo, uow(sql_repo))
     except InvalidOrderReference as ex :
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=F"No order found with the following order_reference {order_reference}")
     except InvalidSkuReference as ex:

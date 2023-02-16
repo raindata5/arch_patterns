@@ -11,4 +11,7 @@ def unit_of_work(repo:Type[repository.Repository]):
     try:
         yield repo
     finally:
+        # TODO: Only rollback on error
+        # repo.session.close()
         repo.rollback()
+        

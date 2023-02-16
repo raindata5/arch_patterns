@@ -14,42 +14,45 @@ from fastapi import (
 from domain.utils import (
     allocate_batch
 )
+import datetime as dt
 
 class InvalidOrderReference(Exception):
     pass
 
 class InvalidSkuReference(Exception):
     pass
-
-def allocate(order_reference: model.OrderReference, sku: model.Sku, repo:Type[repository.Repository],):
-    try:
-        queried_order: Union[model.Order, Any] = repo.get(model.Order, model.Order.order_reference, order_reference.order_reference)
-        if not queried_order:
-            raise InvalidOrderReference()
-        logging.info(queried_order)
-        queried_order_line = queried_order.search_order_line(sku.sku)
-        sku_order_line = queried_order_line.sku
-        logging.info(sku_order_line)
-        queried_batches = repo.list(model.Batch, model.Batch.sku, sku_order_line)
-        queried_batches_list = list(queried_batches)
-        if len(queried_batches_list) == 0:
-            raise InvalidSkuReference()
-        logging.info(queried_batches_list) # run tests twice and print skus
-        best_batch = allocate_batch(queried_order, queried_batches_list)
-    except ValueError as ex:
-        ex.order_reference = queried_order.order_reference
-        raise ex
-    except (InvalidSkuReference, InvalidOrderReference, ) as ex:
-        raise 
-    finally:
-        repo.commit()
+def allocate(order_reference: model.OrderReference, sku: model.Sku, unit_of_work:Type[repository.Repository],):
+    with unit_of_work as uow:
+        
+        try:
+            queried_order: Union[model.Order, Any] = uow.get(model.Order, model.Order.order_reference, order_reference.order_reference)
+            if not queried_order:
+                raise InvalidOrderReference()
+            logging.info(queried_order)
+            queried_order_line = queried_order.search_order_line(sku.sku)
+            sku_order_line = queried_order_line.sku
+            logging.info(sku_order_line)
+            queried_batches = uow.list(model.Batch, model.Batch.sku, sku_order_line)
+            queried_batches_list = list(queried_batches)
+            if len(queried_batches_list) == 0:
+                raise InvalidSkuReference()
+            logging.info(queried_batches_list) # run tests twice and print skus
+            best_batch = allocate_batch(queried_order, queried_batches_list)
+        except ValueError as ex:
+            ex.order_reference = queried_order.order_reference
+            raise ex
+        except (InvalidSkuReference, InvalidOrderReference, ) as ex:
+            raise 
+        uow.commit()
     return best_batch
 
 
-def add_batch(sku, quantity, repo:Type[repository.Repository], eta=None, arrived=None,):
+def add_batch(sku, quantity, repo:Type[repository.Repository], eta=None, arrived=None, ref=None):
+    batch_ref = ref or utils.random_batchref("batch")
+    eta= eta or dt.datetime(9999,1,1),
+    arrived=arrived or False
     try:
-        batch_ref = utils.random_batchref("NaT")
-        batch_instance = model.Batch(batch_ref, sku, quantity)
+        batch_instance = model.Batch(batch_ref, sku, quantity, eta=eta, arrived=arrived)
         repo.add(batch_instance)
     finally :
         repo.commit()
