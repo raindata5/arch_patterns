@@ -1,33 +1,10 @@
-from sqlalchemy import Table, Column, Integer, String, ForeignKey, DateTime, Boolean
-from sqlalchemy.orm import registry, relationship, Session
-from sqlalchemy.sql import func
 from domain import model
-import adapters.repository as repository
-from adapters.orm import (
-    engine
+from adapters import (
+    uow,
+    repository
 )
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine, select
 import datetime as dt
 import pytest
-
-session_maker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-@pytest.fixture(scope="function")
-def get_session():
-    # db = Session(engine)
-    db = session_maker()
-    # try:
-    yield db
-    # finally:
-    db.rollback()
-    db.close()
-        
-@pytest.fixture(scope="function")
-def get_sql_repository(get_session):
-    session: Session = get_session
-    sql_repo = repository.SqlRepository(session)
-    return sql_repo
-
 
 def return_sample_order_info():
     new_batch = model.Batch(reference='TKJ-23244', sku='RED-CHAIR', quantity=30, arrived=False)
@@ -38,38 +15,38 @@ def return_sample_order_info():
     ]
     return new_batch, ex_order, order_lines_params
     
+def get_uow():
+    repo_fake = repository.FakeRepository([], [])
+    return uow.unit_of_work, repo_fake
+
 @pytest.fixture(scope="function")
-def sample_order_info(get_sql_repository):
+def sample_order_info():
     new_batch, ex_order, order_lines_params = return_sample_order_info()
     order_lines = [ex_order.attach_order_line(order_lines_param) for order_lines_param in order_lines_params]
     new_batch.allocate_stock(ex_order)
-    get_sql_repository.session.add_all(
-        [
-            new_batch,# ex_order, order_lines[0], order_lines[1]
-        ]
-    )
-    get_sql_repository.session.commit()
-    return get_sql_repository
 
+    repo_fake = repository.FakeRepository([new_batch], [ex_order])
+    return uow.unit_of_work, repo_fake
 
-
-def test_serialization_of_batch( get_sql_repository):
-    sql_repo = get_sql_repository
+def test_serialization_of_batch():
+    uow_ins, repo_fake = get_uow()
     new_batch, ex_order, order_lines_params = return_sample_order_info()
-    sql_repo.add(new_batch)
-    sql_repo.commit()
-    stmt = select(model.Batch).where(model.Batch.reference == new_batch.reference)
-    stored_batch = sql_repo.session.scalars(stmt).one()
-    sql_repo.session.expire_all()
-    assert stored_batch == new_batch
-    sql_repo.session.delete(stored_batch)
-    sql_repo.commit()
+    with uow_ins(repo_fake) as repo:
+        repo.add(new_batch)
+        repo.commit()
+    assert repo_fake.committed
+
+    with uow_ins(repo_fake) as repo:
+        batch_queried = repo.get(model.Batch, model.Batch.reference, new_batch.reference)
+
+    assert new_batch == batch_queried
 
 def test_get_a_batch(sample_order_info):
-    sql_repo = sample_order_info
-     
+    uow_ins, repo_fake = sample_order_info
     new_batch, ex_order, order_lines_params = return_sample_order_info()
-    queried_batch = sql_repo.get(model.Batch, model.Batch.reference, new_batch.reference)
+    with uow_ins(repo_fake) as repo:
+        queried_batch = repo.get(model.Batch, model.Batch.reference, new_batch.reference)
+        
     assert queried_batch == new_batch
     assert queried_batch.sku == new_batch.sku
     assert queried_batch.quantity == new_batch.quantity

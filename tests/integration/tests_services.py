@@ -49,12 +49,13 @@ def test_allocate_batch():
 def test_allocate_stock_returns_404_no_sku_found():
     batch_nat, order_nat, list_ol = sample_business_objects()
     repo = repository.FakeRepository([batch_nat], [order_nat,])
+    uow_instance = uow.unit_of_work(repo) 
     list_ol[0].sku = 'fake_nat_sku'
     with pytest.raises(services.InvalidSkuReference) as ex:
         best_batch = services.allocate(
             model.OrderReference(order_reference=order_nat.order_reference),
             model.Sku(sku=list_ol[0].sku),
-            repo
+            uow_instance
         )
     assert batch_nat.available_quantity == 30
 
@@ -62,11 +63,12 @@ def test_allocate_stock_returns_no_stock():
     batch_nat, order_nat, list_ol = sample_business_objects()
     batch_nat.available_quantity -= 30
     repo = repository.FakeRepository([batch_nat], [order_nat,])
+    uow_instance = uow.unit_of_work(repo)
     with pytest.raises(model.NoStock):
         best_batch = services.allocate(
             model.OrderReference(order_reference=order_nat.order_reference),
             model.Sku(sku=list_ol[0].sku),
-            repo
+            uow_instance
         )   
     
 
@@ -77,7 +79,7 @@ def test_allocate_order_to_batch_if_already_allocated_idempotent():
         best_batch = services.allocate(
         model.OrderReference(order_reference=order_nat.order_reference),
         model.Sku(sku=list_ol[0].sku),
-        repo
+        uow.unit_of_work(repo)
     )   
 
     assert best_batch.available_quantity == 20
@@ -86,21 +88,23 @@ def test_do_not_allocate_if_no_matching_sku_found():
     batch_nat, order_nat, list_ol = sample_business_objects()
     order_nat.order_lines = []
     repo = repository.FakeRepository([batch_nat], [order_nat,])
+    uow_instance = uow.unit_of_work(repo)
     with pytest.raises(ValueError) as ex:
         services.allocate(
             model.OrderReference(order_reference=order_nat.order_reference),
             model.Sku(sku=list_ol[0].sku),
-            repo
+            uow_instance
         )
 
 def test_add_batch():
     batch_nat, order_nat, list_ol = sample_business_objects()
     repo = repository.FakeRepository(batches=[], orders=[order_nat,])
+    uow_instance = uow.unit_of_work(repo)
     batch_ref=utils.random_batchref("batch")
     inserted_batch = services.add_batch(
         sku=batch_nat.sku,
         quantity=batch_nat.quantity,
-        repo=repo,
+        unit_of_work=uow_instance,
         ref=batch_ref
     )
     retrieved_batch = repo.get(model.Batch, model.Batch.reference, batch_ref)

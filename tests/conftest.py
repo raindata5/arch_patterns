@@ -1,6 +1,5 @@
 from domain import model
 import datetime as dt
-from adapters import repository as repository
 import pytest
 from domain import utils
 import logging
@@ -12,7 +11,10 @@ import datetime as dt
 from domain import utils
 from entrypoints.config import settings
 from adapters.orm import Session
-
+from adapters import (
+    uow,
+    repository
+)
 engine = create_engine(f"postgresql://{settings.pg_oltp_api_user}:{settings.pg_oltp_api_password}@{settings.pg_oltp_api_host}:{settings.pg_oltp_api_port}", echo=True)
 
 print(f"postgresql://{settings.pg_oltp_api_user}:{settings.pg_oltp_api_password}@{settings.pg_oltp_api_host}:{settings.pg_oltp_api_port}")
@@ -36,6 +38,9 @@ def get_sql_repo():
         ps_cursor.close()
         ps_conn.close()
 
+def get_uow_context(get_sql_repo):
+    uow = uow.unit_of_work(repository.SqlRepository(Session()))
+    return uow
 
 @pytest.fixture()
 def return_base_sample_data(get_sql_repo):

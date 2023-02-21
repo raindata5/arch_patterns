@@ -5,13 +5,14 @@ from typing import (
     Any,
 )
 import adapters.repository as repository
-
+import logging
 @contextmanager
 def unit_of_work(repo:Type[repository.Repository]):
     try:
         yield repo
-    finally:
-        # TODO: Only rollback on error
-        # repo.session.close()
+    except Exception as ex:
         repo.rollback()
-        
+        raise ex
+    finally:
+        repo.rollback()
+        logging.info("Finishing transaction against DB")
