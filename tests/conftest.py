@@ -15,7 +15,11 @@ from adapters import (
     uow,
     repository
 )
-engine = create_engine(f"postgresql://{settings.pg_oltp_api_user}:{settings.pg_oltp_api_password}@{settings.pg_oltp_api_host}:{settings.pg_oltp_api_port}", echo=True)
+from typing import (
+    List,
+)
+
+engine = create_engine(f"postgresql://{settings.pg_oltp_api_user}:{settings.pg_oltp_api_password}@{settings.pg_oltp_api_host}:{settings.pg_oltp_api_port}", echo=True,)
 
 print(f"postgresql://{settings.pg_oltp_api_user}:{settings.pg_oltp_api_password}@{settings.pg_oltp_api_host}:{settings.pg_oltp_api_port}")
 Session = sessionmaker(bind=engine, expire_on_commit=False)
@@ -38,9 +42,30 @@ def get_sql_repo():
         ps_cursor.close()
         ps_conn.close()
 
+@pytest.fixture()
 def get_uow_context(get_sql_repo):
-    uow = uow.unit_of_work(repository.SqlRepository(Session()))
-    return uow
+    repo=repository.SqlRepository(Session())
+    uow_ins = uow.unit_of_work(repo)
+    return uow_ins, repo
+
+@pytest.fixture
+def return_unserialized_sample_data():
+    sku_ref_natty, sku_ref_natty_01 = utils.random_sku("NaTTY"), utils.random_sku("NaTTY_01")
+    batch_ref_nat = utils.random_batchref("NaT")
+    order_ref_nat = utils.random_orderid("nat_order")
+
+    batch_nat = model.Batch(reference=batch_ref_nat, sku=sku_ref_natty, quantity=30, eta=dt.datetime.now(), arrived=False)
+    order_nat = model.Order(order_reference=order_ref_nat)
+    order_lines_params = [
+        dict(sku=sku_ref_natty, quantity=10),
+        dict(sku=sku_ref_natty_01, quantity=1)
+]
+    list_ol = [order_nat.attach_order_line(ol) for ol in order_lines_params]
+    
+    batch_nat: model.Batch
+    order_nat: model.Order
+    list_ol: List[model.OrderLine]
+    return batch_nat, order_nat, list_ol
 
 @pytest.fixture()
 def return_base_sample_data(get_sql_repo):

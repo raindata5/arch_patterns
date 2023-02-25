@@ -31,15 +31,21 @@ class SqlRepository(Repository):
 
     def rollback(self):
         self.session.rollback()
+        self.session.close()
+
+    def close(self):
+        self.session.close()
 
     def get(self, class_object,class_object_column, reference):
         stmt = select(class_object).where(class_object_column == reference)
         result=self.session.scalars(statement=stmt)
+        self.commit()
         return result.first()
 
     def list(self, class_object,class_object_column, filter):
         stmt = select(class_object).where(class_object_column == filter)
         result=self.session.scalars(statement=stmt)
+        self.commit()
         return result
 
 class FakeRepository(Repository):
@@ -70,4 +76,7 @@ class FakeRepository(Repository):
         self.committed = 1
 
     def rollback(self):
+        pass
+
+    def close(self):
         pass

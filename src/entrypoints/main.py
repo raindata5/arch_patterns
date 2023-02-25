@@ -30,29 +30,31 @@ from adapters import (
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+# TODO: Does this use the same session repeatedly? Should be instantiated in endpoint?
 sql_repo = repository.SqlRepository(Session())
 app = FastAPI()
-
 @app.get("/")
 def read_root():
     return {"msg": "Hello World"}
 
 @app.get("/batch/{batch_reference}")
 def read_batch(batch_reference: str):
-    queried_batch = sql_repo.get(model.Batch, model.Batch.reference, batch_reference)
-    sql_repo.commit()
+    uow_tmp = uow.unit_of_work(sql_repo)
+    with uow_tmp as repo:
+        queried_batch = repo.get(model.Batch, model.Batch.reference, batch_reference)
+        sql_repo.commit()
     return queried_batch
 
 @app.post("/batches",  status_code=status.HTTP_201_CREATED,)
 def add_batch_ep(batch_info: model.PreBatchInstance):
-    inserted_batch = add_batch(repo=sql_repo, sku=batch_info.sku, quantity=batch_info.quantity, arrived=batch_info.arrived, eta=batch_info.eta)
+    inserted_batch = add_batch(unit_of_work=uow.unit_of_work(sql_repo), sku=batch_info.sku, quantity=batch_info.quantity, arrived=batch_info.arrived, eta=batch_info.eta)
     return inserted_batch
 
 @app.post("/allocate", status_code=status.HTTP_201_CREATED, )
 def allocate_batch_ep(order_reference: model.OrderReference, sku: model.Sku):
     #TODO: Allow the client to specify a sku
     try:
-        best_batch = allocate(order_reference, sku, sql_repo, uow(sql_repo))
+        best_batch = allocate(order_reference, sku, uow.unit_of_work(sql_repo))
     except InvalidOrderReference as ex :
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=F"No order found with the following order_reference {order_reference}")
     except InvalidSkuReference as ex:

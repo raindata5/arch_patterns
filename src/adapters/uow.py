@@ -12,7 +12,11 @@ def unit_of_work(repo:Type[repository.Repository]):
         yield repo
     except Exception as ex:
         repo.rollback()
+        repo.close()
+        repo.commit()
         raise ex
     finally:
+        logging.info("closing transaction against DB")
         repo.rollback()
-        logging.info("Finishing transaction against DB")
+        repo.close()
+        repo.commit()

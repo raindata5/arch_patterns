@@ -118,5 +118,5 @@ class Sku(BaseModel):
 class PreBatchInstance(BaseModel):
     sku: str
     quantity: int
-    eta: dt.datetime
-    arrived: bool
+    eta: Union[dt.datetime, None]
+    arrived: Union[bool, None]

@@ -14,6 +14,9 @@ from fastapi import (
 from domain.utils import (
     allocate_batch
 )
+from adapters import (
+    uow
+)
 import datetime as dt
 
 class InvalidOrderReference(Exception):
@@ -21,7 +24,7 @@ class InvalidOrderReference(Exception):
 
 class InvalidSkuReference(Exception):
     pass
-def allocate(order_reference: model.OrderReference, sku: model.Sku, unit_of_work:Type[repository.Repository],):
+def allocate(order_reference: model.OrderReference, sku: model.Sku, unit_of_work:uow.unit_of_work,):
     with unit_of_work as uow:
         
         try:
@@ -42,18 +45,17 @@ def allocate(order_reference: model.OrderReference, sku: model.Sku, unit_of_work
             ex.order_reference = queried_order.order_reference
             raise ex
         except (InvalidSkuReference, InvalidOrderReference, ) as ex:
-            raise 
+            raise ex
         uow.commit()
     return best_batch
 
 
-def add_batch(sku, quantity, repo:Type[repository.Repository], eta=None, arrived=None, ref=None):
+def add_batch(sku, quantity, unit_of_work:uow.unit_of_work, eta=None, arrived=None, ref=None):
     batch_ref = ref or utils.random_batchref("batch")
     eta= eta or dt.datetime(9999,1,1),
     arrived=arrived or False
-    try:
+    with unit_of_work as uow:
         batch_instance = model.Batch(batch_ref, sku, quantity, eta=eta, arrived=arrived)
-        repo.add(batch_instance)
-    finally :
-        repo.commit()
+        uow.add(batch_instance)
+        uow.commit()
     return batch_instance
