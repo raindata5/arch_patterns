@@ -78,6 +78,16 @@ batch_table = Table(
     # ),
 )
 
+product_table = Table(
+    "product",
+    mapper_registry.metadata,
+    Column(
+        "sku", String(40)
+    ),
+    Column(
+        "version", Integer, nullable=False
+    )
+)
 
 mapper_registry.map_imperatively(
     model.Order,
@@ -101,6 +111,13 @@ mapper_registry.map_imperatively(
     # properties={
     #     "exclude_properties": ["check_order_line_match"]
     # }
+)
+mapper_registry.map_imperatively(
+    model.Product,
+    product_table,
+        properties={
+        "batches": relationship(model.Batch, backref="batch", order_by="batch.c.eta", uselist=True)
+    }
 )
 
 mapper_registry.metadata.create_all(

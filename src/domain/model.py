@@ -106,7 +106,8 @@ class Batch:
 
 class Product:
 
-    def __init__(self, batches: List[Batch]) -> None:
+    def __init__(self, sku: str, batches: List[Batch]) -> None:
+        self.sku = sku
         self.batches = batches
     
     def allocate(self, order):
