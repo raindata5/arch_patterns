@@ -104,6 +104,16 @@ class Batch:
     def __repr__(self) -> str:
         return f"Batch(reference={self.reference!r},)"
 
+class Product:
+
+    def __init__(self, batches: List[Batch]) -> None:
+        self.batches = batches
+    
+    def allocate(self, order):
+        best_batch = utils.allocate_batch(order, self.batches)
+        return best_batch
+
+
 class NoStock(Exception):
     """An exception expressing that there was an attempt to 
     assign an orderline to a batch with insufficient stock """

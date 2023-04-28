@@ -45,6 +45,7 @@ class SqlRepository(Repository):
     def list(self, class_object,class_object_column, filter):
         stmt = select(class_object).where(class_object_column == filter)
         result=self.session.scalars(statement=stmt)
+        # self.session.query().with_for_update
         self.commit()
         return result
 
