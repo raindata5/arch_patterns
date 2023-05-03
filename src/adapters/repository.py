@@ -21,6 +21,7 @@ class SqlRepository(Repository):
     
     def __init__(self, session: Session) -> None:
         self.session = session
+        self.product = None
 
     def add(self, object):
         self.session.add(object)
@@ -37,6 +38,9 @@ class SqlRepository(Repository):
         self.session.close()
 
     def get(self, class_object,class_object_column, reference):
+        if class_object == model.Batch:
+            self.product = self.session.query(model.Product).where(class_object_column == reference).first()
+            return self.product
         stmt = select(class_object).where(class_object_column == reference)
         result=self.session.scalars(statement=stmt)
         self.commit()

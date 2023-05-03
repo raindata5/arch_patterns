@@ -82,7 +82,7 @@ product_table = Table(
     "product",
     mapper_registry.metadata,
     Column(
-        "sku", String(40)
+        "sku", String(40), primary_key=True,
     ),
     Column(
         "version", Integer, nullable=False
@@ -116,8 +116,18 @@ mapper_registry.map_imperatively(
     model.Product,
     product_table,
         properties={
-        "batches": relationship(model.Batch, backref="batch", order_by="batch.c.eta", uselist=True)
+        "batches": relationship(
+            model.Batch,
+            backref="batch",
+            # order_by="batch.c.sku",
+            primaryjoin="and_(product.sku==batch.sku, ",
+            uselist=True
+
+        )
     }
+    # E           sqlalchemy.exc.NoForeignKeysError: Could not determine join condition between parent/child 
+    # tables on relationship Product.batches - there are no foreign keys linking these tables.  Ensure that referencing columns are associated with a ForeignKey or ForeignKeyConstraint, or specify a 'primaryjoin' expression.
+
 )
 
 mapper_registry.metadata.create_all(
