@@ -1,5 +1,8 @@
 import abc
-from domain import model
+from domain import (
+    model,
+    utils
+)
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from typing import (
@@ -22,7 +25,9 @@ class SqlRepository(Repository):
     
     def __init__(self, session: Session) -> None:
         self.session = session
+        self.seen = []
 
+    utils.object_sensor
     def add(self, object):
         self.session.add(object)
         return object
@@ -52,28 +57,34 @@ class SqlRepository(Repository):
         return result
 
 class FakeRepository(Repository):
-    def __init__(self, batches: List[model.Batch], orders: List[model.Order]) -> None:
-        self.batches = batches
+    def __init__(self, products: List[model.Batch], orders: List[model.Order]) -> None:
+        self.products = products
         self.orders = orders
         self.committed = 0
+        self.seen = []
 
+    @utils.object_sensor
     def add(self, batch:model.Batch):
-        self.batches.append(batch)
+        self.products.append(batch)
+        return batch
     
     def get(self, class_object,class_object_column, reference) -> model.Batch:
-        if class_object == model.Batch:
-            queried_batch = next(batch_selected for batch_selected in self.batches if batch_selected.reference == reference)
-        elif class_object == model.Order:
-            queried_batch = next(batch_selected for batch_selected in self.orders if batch_selected.order_reference == reference)
-        return queried_batch
+        # if class_object == model.Batch:
+        #     queried_batch = next(batch_selected for batch_selected in self.batches if batch_selected.reference == reference)
+        # elif class_object == model.Order:
+        try:
+            queried_product = next(product_selected for product_selected in self.products if product_selected.sku == reference)
+        except StopIteration as ex:
+            return None
+        return queried_product
 
-    def list(self, class_object,class_object_column, filter):
-        column_hash_map = {
-            model.Batch.sku : "sku",
-            model.Batch.reference : "reference",
-        }
-        col = column_hash_map.get(class_object_column)
-        return [batch_selected for batch_selected in self.batches if getattr(batch_selected, col) == filter]
+    # def list(self, class_object,class_object_column, filter):
+    #     column_hash_map = {
+    #         model.Batch.sku : "sku",
+    #         model.Batch.reference : "reference",
+    #     }
+    #     col = column_hash_map.get(class_object_column)
+    #     return [batch_selected for batch_selected in self.batches if getattr(batch_selected, col) == filter]
 
     def commit(self):
         self.committed = 1

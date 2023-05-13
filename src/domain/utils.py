@@ -2,7 +2,8 @@ from __future__ import annotations
 from types import MethodType
 from typing import List
 from functools import (
-    partial
+    partial,
+    wraps
 )
 import uuid
 
@@ -69,3 +70,15 @@ def random_batchref(name=""):
 
 def random_orderid(name=""):
     return f"order-{name}-{random_suffix()}"
+
+def object_sensor(callable,):
+
+    @wraps(callable)
+    def wrapped_function(*args, **kwargs):
+        result = callable(*args, **kwargs)
+        if result:
+            self = args[0]
+            self.seen.append(result)
+        return result
+    
+    return wrapped_function

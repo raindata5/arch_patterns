@@ -98,7 +98,7 @@ def test_do_not_allocate_if_no_matching_sku_found():
 
 def test_add_batch():
     batch_nat, order_nat, list_ol = sample_business_objects()
-    repo = repository.FakeRepository(batches=[], orders=[order_nat,])
+    repo = repository.FakeRepository(products=[], orders=[order_nat,])
     uow_instance = uow.unit_of_work(repo)
     batch_ref=utils.random_batchref("batch")
     inserted_batch = services.add_batch(
@@ -107,6 +107,6 @@ def test_add_batch():
         unit_of_work=uow_instance,
         ref=batch_ref
     )
-    retrieved_batch = repo.get(model.Batch, model.Batch.reference, batch_ref)
-    assert retrieved_batch.reference == batch_ref
+    retrieved_product = repo.get(model.Product, model.Product.sku, batch_nat.sku)
+    assert retrieved_product.sku == batch_nat.sku
     assert inserted_batch.sku == batch_nat.sku
