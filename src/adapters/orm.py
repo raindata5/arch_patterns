@@ -44,9 +44,20 @@ order_table=Table(
     Column(
         "order_reference", String(40), unique=True
     ),
+)
+
+product_table = Table(
+    "product",
+    mapper_registry.metadata,
+    # Column(
+    #     "id", Integer, primary_key=True, autoincrement=True
+    # ),
     Column(
-        "batch_reference", String(200), ForeignKey("batch.reference")
+        "sku", String(40), primary_key=True,
     ),
+    Column(
+        "version", Integer, nullable=False
+    )
 )
 
 batch_table = Table(
@@ -59,7 +70,7 @@ batch_table = Table(
         "reference", String(40), autoincrement=True, unique=True
     ),
     Column(
-        "sku", String(40), autoincrement=True
+        "sku", String(40), ForeignKey("product.sku")
     ),
     Column(
         "available_quantity", Integer,
@@ -73,44 +84,58 @@ batch_table = Table(
     Column(
         "arrived", Boolean,
     ),
-    # Column(
-    #     "order_reference", Integer, ForeignKey("order.id")
-    # ),
 )
 
-product_table = Table(
-    "product",
+allocation_table = Table(
+    "allocation",
     mapper_registry.metadata,
-    Column(
-        "sku", String(40), primary_key=True,
-    ),
-    Column(
-        "version", Integer, nullable=False
-    )
+    Column("order_id", ForeignKey("order.id")),
+    Column("batch_id", ForeignKey("batch.id")),
 )
+
+# mapper_registry.map_imperatively(
+#     "allocation",
+#     allocation_table,
+# )
 
 mapper_registry.map_imperatively(
     model.Order,
     order_table,
     properties={
-        "order_lines": relationship(model.OrderLine, backref="order", order_by="order_line.c.parent_order_reference", uselist=True)
+        "order_lines": relationship(model.OrderLine, back_populates="order", order_by="order_line.c.parent_order_reference", uselist=True),
+        # "batches": relationship(
+        #     model.Batch,
+        #     back_populates="orders"
+        # )
     }
 )
 
-mapper_registry.map_imperatively(
-    model.Batch, 
-    batch_table,
-        properties={
-        "orders": relationship(model.Order, backref="batch", order_by="order.c.id", uselist=True)
-    }
-)
 
 mapper_registry.map_imperatively(
     model.OrderLine,
     order_line_table,
-    # properties={
-    #     "exclude_properties": ["check_order_line_match"]
-    # }
+    properties={
+        # "exclude_properties": ["check_order_line_match"]
+        "order": relationship(
+            model.Order,
+            back_populates="order_lines"
+        ),
+        # "batch": relationship(model.Batch, back_populates="orders")
+    }
+)
+mapper_registry.map_imperatively(
+    model.Batch, 
+    batch_table,
+        properties={
+        "orders": relationship(model.Order, secondary=allocation_table, uselist=True),
+        # "order_lines": relationship(model.OrderLine, secondary=allocation_table, uselist=True),
+
+        # "product": relationship(
+            # model.Product,
+            # back_populates="batches"
+        # )
+
+    }
 )
 mapper_registry.map_imperatively(
     model.Product,
@@ -118,16 +143,12 @@ mapper_registry.map_imperatively(
         properties={
         "batches": relationship(
             model.Batch,
-            backref="batch",
-            # order_by="batch.c.sku",
-            primaryjoin="and_(product.sku==batch.sku, ",
-            uselist=True
+        #     # back_populates="product",
+        #     uselist=True
 
-        )
-    }
-    # E           sqlalchemy.exc.NoForeignKeysError: Could not determine join condition between parent/child 
-    # tables on relationship Product.batches - there are no foreign keys linking these tables.  Ensure that referencing columns are associated with a ForeignKey or ForeignKeyConstraint, or specify a 'primaryjoin' expression.
-
+        ),
+    },
+    version_id_col = product_table.c.version
 )
 
 mapper_registry.metadata.create_all(
@@ -137,7 +158,9 @@ mapper_registry.metadata.create_all(
 if __name__ == "__main__":
 
     with Session() as session:
+        new_product = model.Product(sku='RED-CHAIR', batches=[])
         new_batch = model.Batch(reference='TKJ-23244', sku='RED-CHAIR', quantity=30, eta=dt.datetime.now(), arrived=False)
+        new_product.batches.append(new_batch)
         ex_order = model.Order(order_reference='TGL-23245')
         order_lines_params = [
             dict(sku="RED-CHAIR", quantity=10),

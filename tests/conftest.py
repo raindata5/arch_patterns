@@ -54,8 +54,10 @@ def return_unserialized_sample_data():
     batch_ref_nat = utils.random_batchref("NaT")
     order_ref_nat = utils.random_orderid("nat_order")
 
+    product_nat = model.Product(sku=sku_ref_natty, batches=[])
     batch_nat = model.Batch(reference=batch_ref_nat, sku=sku_ref_natty, quantity=30, eta=dt.datetime.now(), arrived=False)
     order_nat = model.Order(order_reference=order_ref_nat)
+    product_nat.batches.append(batch_nat)
     order_lines_params = [
         dict(sku=sku_ref_natty, quantity=10),
         dict(sku=sku_ref_natty_01, quantity=1)
@@ -74,15 +76,18 @@ def return_base_sample_data(get_sql_repo):
         batch_ref_nat = utils.random_batchref("NaT")
         order_ref_nat = utils.random_orderid("nat_order")
 
+        product_nat = model.Product(sku=sku_ref_natty, batches=[])
         batch_nat = model.Batch(reference=batch_ref_nat, sku=sku_ref_natty, quantity=30, eta=dt.datetime.now(), arrived=False)
         order_nat = model.Order(order_reference=order_ref_nat)
         order_lines_params = [
             dict(sku=sku_ref_natty, quantity=10),
             dict(sku=sku_ref_natty_01, quantity=1)
     ]
+        product_nat.batches.append(batch_nat)
         list_ol = [order_nat.attach_order_line(ol) for ol in order_lines_params]
         # new_batch.allocate_stock(ex_order)
-        session.add_all([batch_nat, order_nat,])  
+        # session.add_all([batch_nat, order_nat, product_nat])  
+        session.add_all([ order_nat, product_nat])  
         session.commit()
     return batch_nat, order_nat, list_ol
 

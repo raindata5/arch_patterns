@@ -3,6 +3,7 @@ commit transaction;
 truncate  "batch" cascade ;
 truncate  "order" cascade;
 truncate  "order_line" cascade ;
+truncate "allocation" cascade;
 -- truncate  "_Production".businessholding cascade ;
 -- truncate  "_Production".businesscategorybridge cascade ;
 -- truncate  "_Production".countygrowth cascade;

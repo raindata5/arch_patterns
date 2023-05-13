@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 from typing import (
     List,
+    Union
 )
 
 class Repository(abc.ABC):
@@ -21,7 +22,6 @@ class SqlRepository(Repository):
     
     def __init__(self, session: Session) -> None:
         self.session = session
-        self.product = None
 
     def add(self, object):
         self.session.add(object)
@@ -38,15 +38,13 @@ class SqlRepository(Repository):
         self.session.close()
 
     def get(self, class_object,class_object_column, reference):
-        if class_object == model.Batch:
-            self.product = self.session.query(model.Product).where(class_object_column == reference).first()
-            return self.product
         stmt = select(class_object).where(class_object_column == reference)
         result=self.session.scalars(statement=stmt)
         self.commit()
         return result.first()
 
     def list(self, class_object,class_object_column, filter):
+
         stmt = select(class_object).where(class_object_column == filter)
         result=self.session.scalars(statement=stmt)
         # self.session.query().with_for_update

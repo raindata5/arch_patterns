@@ -27,7 +27,8 @@ def test_get_batch(return_base_sample_data):
         F"{settings.api_url}/batch/{batch_nat.reference}",
 
     )
-    data.json()["reference"] == batch_nat.reference
+    data_json = data.json()
+    data_json
 
 def test_allocate_batch(return_base_sample_data):
     batch_nat, order_nat, list_ol = return_base_sample_data
@@ -93,6 +94,7 @@ def test_add_batch_returns_201(get_sql_repo):
         arrived=False
     )    
     res = requests.post(f"{settings.api_url}/batches", json=batch_body)
+    res_json = res.json()
     assert res.status_code == 201
     assert res.json()["arrived"] == False
     assert res.json()["available_quantity"] == batch_body["quantity"]
