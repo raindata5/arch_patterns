@@ -1,4 +1,4 @@
-from domain import utils
+from domain import utils, event
 import domain.model as model
 import adapters.repository as repository
 from typing import (
@@ -25,8 +25,7 @@ class InvalidOrderReference(Exception):
 class InvalidSkuReference(Exception):
     pass
 def allocate(order_reference: model.OrderReference, sku: model.Sku, unit_of_work:uow.unit_of_work,):
-    with unit_of_work as uow:
-        
+    with unit_of_work as uow:   
         try:
             queried_order: Union[model.Order, Any] = uow.get(model.Order, model.Order.order_reference, order_reference.order_reference)
             if not queried_order:
@@ -41,12 +40,11 @@ def allocate(order_reference: model.OrderReference, sku: model.Sku, unit_of_work
                 raise InvalidSkuReference()
             logging.info(product.batches) # run tests twice and print skus
             
-            # best_batch = allocate_batch(queried_order, queried_batches_list)
             product.version += 1
             best_batch = product.allocate(queried_order)
-        except ValueError as ex:
-            ex.order_reference = queried_order.order_reference
-            raise ex
+            if not best_batch:
+                product.events.append(event.OutOfStockEvent(sku=sku))
+                uow.add(product)
         except (InvalidSkuReference, InvalidOrderReference, ) as ex:
             raise ex
         uow.commit()

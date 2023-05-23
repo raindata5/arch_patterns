@@ -5,7 +5,7 @@ import datetime as dt
 from functools import (
     total_ordering
 )
-from domain import utils
+from domain import utils, event
 from pydantic import BaseModel
 
 @dataclass(unsafe_hash=True)
@@ -19,7 +19,7 @@ class OrderLine:
         if batch.sku == self.sku and batch.available_quantity >= self.quantity:
             return True
         elif batch.available_quantity < self.quantity:
-            raise NoStock()
+            return False
         return False
 
     def check_allocation_status(self, batch: Batch):
@@ -81,8 +81,8 @@ class Batch:
                 #TODO: Deal with OrderLine switching to different Batch
                 self.orders.append(order)
                 self.available_quantity -= order_line.quantity
-                return None
-        raise ValueError("No matching order_line was found")
+                return self
+        return None
     
     def deallocate_stock(self, order_reference: str, order_line_sku: str):
         #TODO: create total_ordering r just __eq__ method
@@ -110,6 +110,7 @@ class Product:
         self.sku = sku
         self.batches = batches
         self.version = version
+        self.events = []
     
     def allocate(self, order):
         best_batch = utils.allocate_batch(order, self.batches)

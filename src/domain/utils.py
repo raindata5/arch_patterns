@@ -1,4 +1,5 @@
 from __future__ import annotations
+import logging
 from types import MethodType
 from typing import List
 from functools import (
@@ -6,7 +7,7 @@ from functools import (
     wraps
 )
 import uuid
-
+from domain import event
 class CheckOrderLineMatch:
     """
     This callable object determines whether an orderline
@@ -52,8 +53,8 @@ def allocate_batch(order, batches: List) -> model.Batch:
     sorted_batches = sorted(batches, reverse=False)
     # next(b for b in sorted_batches if order_line.verify_allocation(b)  and not order_line.check_allocation_status(b) ) # Do we want this to fail or keep this check here?
     best_batch = sorted_batches[0]
-    best_batch.allocate_stock(order)
-    return best_batch
+    best_batch_result = best_batch.allocate_stock(order)
+    return best_batch_result
 
 
 def random_suffix():
@@ -82,3 +83,6 @@ def object_sensor(callable,):
         return result
     
     return wrapped_function
+
+def out_of_stock_handler(event: event.OutOfStockEvent):
+    logging.info(f'Creating a PO for {event.sku}')

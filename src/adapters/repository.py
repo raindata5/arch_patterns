@@ -27,7 +27,7 @@ class SqlRepository(Repository):
         self.session = session
         self.seen = []
 
-    utils.object_sensor
+    @utils.object_sensor
     def add(self, object):
         self.session.add(object)
         return object
@@ -57,26 +57,27 @@ class SqlRepository(Repository):
         return result
 
 class FakeRepository(Repository):
-    def __init__(self, products: List[model.Batch], orders: List[model.Order]) -> None:
+    def __init__(self, products: List[model.Product], orders: List[model.Order]) -> None:
         self.products = products
         self.orders = orders
         self.committed = 0
         self.seen = []
 
     @utils.object_sensor
-    def add(self, batch:model.Batch):
-        self.products.append(batch)
-        return batch
+    def add(self, product:model.Product):
+        if product not in self.products:
+            self.products.append(product)
+        return product
     
     def get(self, class_object,class_object_column, reference) -> model.Batch:
-        # if class_object == model.Batch:
-        #     queried_batch = next(batch_selected for batch_selected in self.batches if batch_selected.reference == reference)
-        # elif class_object == model.Order:
         try:
-            queried_product = next(product_selected for product_selected in self.products if product_selected.sku == reference)
+            if class_object == model.Order:
+                queried_obj = next(order_selected for order_selected in self.orders if order_selected.order_reference == reference)
+            elif class_object == model.Product:
+                queried_obj = next(product_selected for product_selected in self.products if product_selected.sku == reference)
         except StopIteration as ex:
             return None
-        return queried_product
+        return queried_obj
 
     # def list(self, class_object,class_object_column, filter):
     #     column_hash_map = {
