@@ -27,6 +27,7 @@ from sqlalchemy import select
 from adapters import (
     uow
 )
+from domain import event
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -47,14 +48,16 @@ def read_batch(batch_reference: str):
 
 @app.post("/batches",  status_code=status.HTTP_201_CREATED,)
 def add_batch_ep(batch_info: model.PreBatchInstance):
-    inserted_batch = add_batch(unit_of_work=uow.unit_of_work(sql_repo), sku=batch_info.sku, quantity=batch_info.quantity, arrived=batch_info.arrived, eta=batch_info.eta)
+    event_new = event.BatchCreated(**batch_info)
+    inserted_batch = add_batch(event=event_new, unit_of_work=uow.unit_of_work(sql_repo))
     return inserted_batch
 
 @app.post("/allocate", status_code=status.HTTP_201_CREATED, )
 def allocate_batch_ep(order_reference: model.OrderReference, sku: model.Sku):
     #TODO: Allow the client to specify a sku
     try:
-        best_batch = allocate(order_reference, sku, uow.unit_of_work(sql_repo))
+        event_new = event.AllocationRequired(**order_reference)
+        best_batch = allocate(event_new, uow.unit_of_work(sql_repo))
     except InvalidOrderReference as ex :
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=F"No order found with the following order_reference {order_reference}")
     except InvalidSkuReference as ex:

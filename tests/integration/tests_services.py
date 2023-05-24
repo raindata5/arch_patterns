@@ -5,12 +5,14 @@ from adapters import (
 from typing import (
     List,
 )
-from domain import model
-from service_layer import services
+from domain import (
+    model,
+    event
+)
+from service_layer import services, message_bus
 from domain import utils
 import datetime as dt
 import pytest
-
 
 
 def sample_business_objects():
@@ -67,9 +69,12 @@ def test_allocate_stock_returns_no_stock():
     repo = repository.FakeRepository([product_nat], [order_nat,])
     uow_instance = uow.unit_of_work(repo)
     # with pytest.raises(model.NoStock):
+    event_new = event.AllocationRequired(
+        order_reference=order_nat.order_reference,
+        sku=list_ol[0].sku
+    )
     best_batch = services.allocate(
-        model.OrderReference(order_reference=order_nat.order_reference),
-        model.Sku(sku=list_ol[0].sku),
+        event_new,
         uow_instance
     )   
     
@@ -99,16 +104,24 @@ def test_do_not_allocate_if_no_matching_sku_found():
         )
 
 def test_add_batch():
-    batch_nat, order_nat, list_ol = sample_business_objects()
+    product_nat, order_nat, list_ol = sample_business_objects()
     repo = repository.FakeRepository(products=[], orders=[order_nat,])
     uow_instance = uow.unit_of_work(repo)
     batch_ref=utils.random_batchref("batch")
-    inserted_batch = services.add_batch(
-        sku=batch_nat.sku,
-        quantity=batch_nat.quantity,
-        unit_of_work=uow_instance,
-        ref=batch_ref
+    inserted_batch = message_bus.handle(
+        event=event.BatchCreated(
+                sku=product_nat.sku,
+                quantity=product_nat.batches[0].quantity,
+                ref=batch_ref
+        ),
+        unit_of_work=uow_instance
     )
-    retrieved_product = repo.get(model.Product, model.Product.sku, batch_nat.sku)
-    assert retrieved_product.sku == batch_nat.sku
-    assert inserted_batch.sku == batch_nat.sku
+    # inserted_batch = services.add_batch(
+    #     sku=batch_nat.sku,
+    #     quantity=batch_nat.quantity,
+    #     unit_of_work=uow_instance,
+    #     ref=batch_ref
+    # )
+    retrieved_product = repo.get(model.Product, model.Product.sku, product_nat.sku)
+    assert retrieved_product.sku == product_nat.sku
+    assert inserted_batch.sku == product_nat.sku
