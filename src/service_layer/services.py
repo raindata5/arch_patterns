@@ -48,7 +48,7 @@ def allocate(event: event.AllocationRequired, unit_of_work:uow.unit_of_work,):
         except (InvalidSkuReference, InvalidOrderReference, ) as ex:
             raise ex
         uow.commit()
-    return best_batch, uow
+    return best_batch
 
 
 def add_batch(event: event.BatchCreated, unit_of_work:uow.unit_of_work,):
@@ -64,4 +64,4 @@ def add_batch(event: event.BatchCreated, unit_of_work:uow.unit_of_work,):
         batch_instance = model.Batch(batch_ref, event.sku, event.quantity, eta=eta, arrived=arrived)
         product.batches.append(batch_instance)
         uow.commit()
-    return batch_instance, uow
+    return batch_instance

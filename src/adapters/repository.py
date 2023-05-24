@@ -47,6 +47,12 @@ class SqlRepository(Repository):
         result=self.session.scalars(statement=stmt)
         self.commit()
         return result.first()
+    
+    def collect_new_events(self):
+        for obj in self.seen:
+            obj: model.Product
+            while obj.events:
+                yield obj.events.pop(0)
 
     def list(self, class_object,class_object_column, filter):
 
