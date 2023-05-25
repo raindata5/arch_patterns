@@ -75,7 +75,7 @@ class Batch:
     #TODO: Consider adding an error here
     def allocate_stock(self, order: Order) -> None:
         if order in self.orders:
-            return None
+            return self
         for order_line in order.order_lines:
             if order_line.verify_allocation(self):
                 #TODO: Deal with OrderLine switching to different Batch
