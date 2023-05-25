@@ -22,7 +22,6 @@ def sample_business_objects():
 
     batch_nat = model.Batch(reference=batch_ref_nat, sku=sku_ref_natty, quantity=30, eta=dt.datetime.now(), arrived=False)
     product_nat = model.Product(sku=sku_ref_natty, batches=[batch_nat])
-    product_nat.batches.append(batch_nat)
     order_nat = model.Order(order_reference=order_ref_nat)
     order_lines_params = [
         dict(sku=sku_ref_natty, quantity=10),
@@ -94,9 +93,9 @@ def test_allocate_order_to_batch_if_already_allocated_idempotent():
     assert best_batch.available_quantity == 20
 
 def test_do_not_allocate_if_no_matching_sku_found():
-    batch_nat, order_nat, list_ol = sample_business_objects()
+    product_nat, order_nat, list_ol = sample_business_objects()
     order_nat.order_lines = []
-    repo = repository.FakeRepository([batch_nat], [order_nat,])
+    repo = repository.FakeRepository([product_nat], [order_nat,])
     uow_instance = uow.unit_of_work(repo)
     results = services.allocate(
         event.AllocationRequired(
