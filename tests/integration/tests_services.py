@@ -84,8 +84,10 @@ def test_allocate_order_to_batch_if_already_allocated_idempotent():
     repo = repository.FakeRepository([product_nat], [order_nat,])
     for _ in range(2):
         best_batch = services.allocate(
-        model.OrderReference(order_reference=order_nat.order_reference),
-        model.Sku(sku=list_ol[0].sku),
+            event.AllocationRequired(
+                order_reference=order_nat.order_reference,
+                sku=list_ol[0].sku
+            ),
         uow.unit_of_work(repo)
     )   
 
@@ -96,19 +98,20 @@ def test_do_not_allocate_if_no_matching_sku_found():
     order_nat.order_lines = []
     repo = repository.FakeRepository([batch_nat], [order_nat,])
     uow_instance = uow.unit_of_work(repo)
-    with pytest.raises(ValueError) as ex:
-        services.allocate(
-            model.OrderReference(order_reference=order_nat.order_reference),
-            model.Sku(sku=list_ol[0].sku),
-            uow_instance
-        )
+    results = services.allocate(
+        event.AllocationRequired(
+            order_reference=order_nat.order_reference,
+            sku=list_ol[0].sku
+        ),
+        uow_instance
+    )
 
 def test_add_batch():
     product_nat, order_nat, list_ol = sample_business_objects()
     repo = repository.FakeRepository(products=[], orders=[order_nat,])
     uow_instance = uow.unit_of_work(repo)
     batch_ref=utils.random_batchref("batch")
-    inserted_batch = message_bus.handle(
+    results = message_bus.handle(
         event=event.BatchCreated(
                 sku=product_nat.sku,
                 quantity=product_nat.batches[0].quantity,
@@ -116,12 +119,7 @@ def test_add_batch():
         ),
         unit_of_work=uow_instance
     )
-    # inserted_batch = services.add_batch(
-    #     sku=batch_nat.sku,
-    #     quantity=batch_nat.quantity,
-    #     unit_of_work=uow_instance,
-    #     ref=batch_ref
-    # )
+    inserted_batch=results[0]
     retrieved_product = repo.get(model.Product, model.Product.sku, product_nat.sku)
     assert retrieved_product.sku == product_nat.sku
-    assert inserted_batch[0].sku == product_nat.sku
+    assert inserted_batch.sku == product_nat.sku

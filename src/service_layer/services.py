@@ -1,4 +1,5 @@
-from domain import utils, event
+from domain import utils
+from domain import event as eve
 import domain.model as model
 import adapters.repository as repository
 from typing import (
@@ -24,7 +25,7 @@ class InvalidOrderReference(Exception):
 
 class InvalidSkuReference(Exception):
     pass
-def allocate(event: event.AllocationRequired, unit_of_work:uow.unit_of_work,):
+def allocate(event: eve.AllocationRequired, unit_of_work:uow.unit_of_work,):
     with unit_of_work as uow:   
         try:
             queried_order: Union[model.Order, Any] = uow.get(model.Order, model.Order.order_reference, event.order_reference)
@@ -43,7 +44,7 @@ def allocate(event: event.AllocationRequired, unit_of_work:uow.unit_of_work,):
             product.version += 1
             best_batch = product.allocate(queried_order)
             if not best_batch:
-                product.events.append(event.OutOfStockEvent(sku=event.sku))
+                product.events.append(eve.OutOfStockEvent(sku=event.sku))
                 uow.add(product)
         except (InvalidSkuReference, InvalidOrderReference, ) as ex:
             raise ex
@@ -51,7 +52,7 @@ def allocate(event: event.AllocationRequired, unit_of_work:uow.unit_of_work,):
     return best_batch
 
 
-def add_batch(event: event.BatchCreated, unit_of_work:uow.unit_of_work,):
+def add_batch(event: eve.BatchCreated, unit_of_work:uow.unit_of_work,):
     batch_ref = event.ref or utils.random_batchref("batch")
     eta= event.eta or dt.datetime(9999,1,1)
     arrived=event.arrived or False
