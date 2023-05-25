@@ -13,15 +13,17 @@ messagebus = {
 }
 
 def handle(event: event, unit_of_work:uow.unit_of_work):
-    result = []
+    results = []
     queue = [event]
     # with unit_of_work as uow:
     while len(queue) > 0:
         event_popped = queue.pop(0)
         for handler in messagebus[type(event)]:
             obj = handler(event, unit_of_work)
+            if obj:
+                results.append(obj)
             queue.extend(unit_of_work.repo.collect_new_events())
-    return result.pop(0)
+    return results
 
     #         obj_popped = uow.seen.pop()
     #             [

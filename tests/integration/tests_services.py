@@ -124,4 +124,4 @@ def test_add_batch():
     # )
     retrieved_product = repo.get(model.Product, model.Product.sku, product_nat.sku)
     assert retrieved_product.sku == product_nat.sku
-    assert inserted_batch.sku == product_nat.sku
+    assert inserted_batch[0].sku == product_nat.sku

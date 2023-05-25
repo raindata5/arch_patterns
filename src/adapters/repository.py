@@ -92,7 +92,11 @@ class FakeRepository(Repository):
     #     }
     #     col = column_hash_map.get(class_object_column)
     #     return [batch_selected for batch_selected in self.batches if getattr(batch_selected, col) == filter]
-
+    def collect_new_events(self):
+        for obj in self.seen:
+            obj: model.Product
+            while obj.events:
+                yield obj.events.pop(0)
     def commit(self):
         self.committed = 1
 
