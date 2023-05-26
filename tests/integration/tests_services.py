@@ -35,32 +35,38 @@ def sample_business_objects():
     return product_nat, order_nat, list_ol
 
 def test_allocate_batch():
-    batch_nat, order_nat, list_ol = sample_business_objects()
-    batch_nat_02, order_nat_02, list_ol_02 = sample_business_objects()
-    repo_fake = repository.FakeRepository([batch_nat, batch_nat_02], [order_nat, order_nat_02])
+    product_nat, order_nat, list_ol = sample_business_objects()
+    product_nat_02, order_nat_02, list_ol_02 = sample_business_objects()
+    repo_fake = repository.FakeRepository([product_nat, product_nat_02], [order_nat, order_nat_02])
     uow_instance = uow.unit_of_work(repo_fake) 
+    event_new = event.AllocationRequired(
+        order_reference=order_nat.order_reference,
+        sku=list_ol[0].sku
+    )
 
     best_batch = services.allocate(
-        model.OrderReference(order_reference=order_nat.order_reference),
-        model.Sku(sku=list_ol[0].sku),
+        event_new,
         uow_instance
     )
-    assert best_batch.reference == batch_nat.reference
+    assert best_batch.reference == product_nat.batches[0].reference
     assert best_batch.available_quantity == (best_batch.quantity - list_ol[0].quantity)
     assert repo_fake.committed
 
 def test_allocate_stock_returns_404_no_sku_found():
-    batch_nat, order_nat, list_ol = sample_business_objects()
-    repo = repository.FakeRepository([batch_nat], [order_nat,])
+    product_nat, order_nat, list_ol = sample_business_objects()
+    repo = repository.FakeRepository([product_nat], [order_nat,])
     uow_instance = uow.unit_of_work(repo) 
     list_ol[0].sku = 'fake_nat_sku'
+    event_new = event.AllocationRequired(
+        order_reference=order_nat.order_reference,
+        sku=list_ol[0].sku
+    )
     with pytest.raises(services.InvalidSkuReference) as ex:
-        best_batch = services.allocate(
-            model.OrderReference(order_reference=order_nat.order_reference),
-            model.Sku(sku=list_ol[0].sku),
+        results = services.allocate(
+            event_new,
             uow_instance
         )
-    assert batch_nat.available_quantity == 30
+    assert product_nat.batches[0].available_quantity == 30
 
 def test_allocate_stock_returns_no_stock():
     product_nat, order_nat, list_ol = sample_business_objects()
@@ -72,10 +78,13 @@ def test_allocate_stock_returns_no_stock():
         order_reference=order_nat.order_reference,
         sku=list_ol[0].sku
     )
-    best_batch = services.allocate(
+    results = services.allocate(
         event_new,
         uow_instance
     )   
+    inserted_batch=results[0]
+    event_ret = list(repo.collect_new_events())[0]
+    assert type(event_ret) == event.OutOfStockEvent 
     
 
 def test_allocate_order_to_batch_if_already_allocated_idempotent():
@@ -97,6 +106,7 @@ def test_do_not_allocate_if_no_matching_sku_found():
     order_nat.order_lines = []
     repo = repository.FakeRepository([product_nat], [order_nat,])
     uow_instance = uow.unit_of_work(repo)
+    # with pytest.raises(services.InvalidOrderReference):
     results = services.allocate(
         event.AllocationRequired(
             order_reference=order_nat.order_reference,
