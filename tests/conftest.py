@@ -67,7 +67,7 @@ def return_unserialized_sample_data():
     batch_nat: model.Batch
     order_nat: model.Order
     list_ol: List[model.OrderLine]
-    return batch_nat, order_nat, list_ol
+    return product_nat, batch_nat, order_nat, list_ol
 
 @pytest.fixture()
 def return_base_sample_data(get_sql_repo):

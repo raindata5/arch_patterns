@@ -48,7 +48,7 @@ def read_batch(batch_reference: str):
 
 @app.post("/batches",  status_code=status.HTTP_201_CREATED,)
 def add_batch_ep(batch_info: model.PreBatchInstance):
-    event_new = event.BatchCreated(**batch_info)
+    event_new = event.BatchCreated(**batch_info.dict())
     inserted_batch = add_batch(event=event_new, unit_of_work=uow.unit_of_work(sql_repo))
     return inserted_batch
 
@@ -56,7 +56,7 @@ def add_batch_ep(batch_info: model.PreBatchInstance):
 def allocate_batch_ep(order_reference: model.OrderReference, sku: model.Sku):
     #TODO: Allow the client to specify a sku
     try:
-        event_new = event.AllocationRequired(**order_reference)
+        event_new = event.AllocationRequired(**order_reference.dict(), **sku.dict())
         best_batch = allocate(event_new, uow.unit_of_work(sql_repo))
     except InvalidOrderReference as ex :
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=F"No order found with the following order_reference {order_reference}")
