@@ -66,3 +66,6 @@ def add_batch(event: eve.BatchCreated, unit_of_work:uow.unit_of_work,):
         product.batches.append(batch_instance)
         uow.commit()
     return batch_instance
+
+def modify_batch_quantity(event: eve.BatchQuantityChanged, unit_of_work:uow.unit_of_work,):
+    pass
