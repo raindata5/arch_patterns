@@ -89,7 +89,7 @@ def return_base_sample_data(get_sql_repo):
         # session.add_all([batch_nat, order_nat, product_nat])  
         session.add_all([ order_nat, product_nat])  
         session.commit()
-    return batch_nat, order_nat, list_ol
+    return product_nat, order_nat, list_ol
 
 @pytest.fixture
 def return_serialized_order(get_sql_repo):

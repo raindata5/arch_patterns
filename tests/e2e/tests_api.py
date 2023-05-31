@@ -31,8 +31,8 @@ def test_get_batch(return_base_sample_data):
     data_json
 
 def test_allocate_batch(return_base_sample_data):
-    batch_nat, order_nat, list_ol = return_base_sample_data
-    batch_nat: model.Batch
+    product_nat, order_nat, list_ol = return_base_sample_data
+    product_nat: model.Product
     order_nat: model.Order
 
     list_ol: List[model.OrderLine]
@@ -42,15 +42,15 @@ def test_allocate_batch(return_base_sample_data):
     data_sku_order = dict(order_reference=order_ref_body, sku=sku_body)
     res = requests.post(f"{settings.api_url}/allocate", json=data_sku_order)
     assert res.status_code == 201
-    assert res.json()["reference"] == batch_nat.reference
-    assert res.json()["available_quantity"] == batch_nat.available_quantity - list_ol[0].quantity
+    assert res.json()["reference"] == product_nat.batches[0].reference
+    assert res.json()["available_quantity"] == product_nat.batches[0].available_quantity - list_ol[0].quantity
 
 # TODO: Migrate the following tests to service layer
 
 def test_allocate_stock_returns_404_no_stock(return_base_sample_data, return_serialized_order):
-    batch_nat, order_nat, list_ol = return_base_sample_data
+    product_nat, order_nat, list_ol = return_base_sample_data
     order_nat, list_ol = return_serialized_order
-    batch_nat: model.Batch
+    batch_nat: model.Product
     order_nat: model.Order
     list_ol: List[model.OrderLine]
     order_nat_ref = order_nat.order_reference
@@ -68,9 +68,9 @@ def test_allocate_stock_returns_404_no_stock(return_base_sample_data, return_ser
 
 
 def test_allocate_stock_returns_404_no_sku_found(return_base_sample_data, return_serialized_order):
-    batch_nat, order_nat, list_ol = return_base_sample_data
+    product_nat, order_nat, list_ol = return_base_sample_data
     order_nat_02, list_ol_02 = return_serialized_order
-    batch_nat: model.Batch
+    product_nat: model.Product
     order_nat: model.Order
     list_ol: List[model.OrderLine]
     order_nat_ref = order_nat.order_reference

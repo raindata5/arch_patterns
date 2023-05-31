@@ -22,3 +22,9 @@ class BatchCreated(Event):
 class AllocationRequired(Event):
     order_reference: str
     sku: str
+
+@dataclass
+def BatchQuantityChanged(Event):
+    batch_reference: str
+    new_quantity: int
+    sku: str
