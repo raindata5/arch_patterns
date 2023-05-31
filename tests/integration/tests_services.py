@@ -132,3 +132,19 @@ def test_add_batch():
     retrieved_product = repo.get(model.Product, model.Product.sku, product_nat.sku)
     assert retrieved_product.sku == product_nat.sku
     assert inserted_batch.sku == product_nat.sku
+
+def test_change_batch_quantity():
+    product_nat, order_nat, list_ol = sample_business_objects()
+    repo = repository.FakeRepository(products=[product_nat], orders=[order_nat,])
+    uow_instance = uow.unit_of_work(repo)
+    results = message_bus.handle(
+        event=event.BatchQuantityChanged(
+            batch_reference=product_nat.batches[0].reference,
+            new_quantity=10,
+            sku=product_nat.batches[0].sku
+        ),
+        unit_of_work=uow_instance
+    )
+
+def test_new_allocation_made_after_change_in_batch_quantity():
+    pass
