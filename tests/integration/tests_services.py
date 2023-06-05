@@ -145,6 +145,9 @@ def test_change_batch_quantity():
         ),
         unit_of_work=uow_instance
     )
+    requested_batch=results[0]
+    assert requested_batch.quantity == 20
+
 
 def test_new_allocation_made_after_change_in_batch_quantity():
     pass

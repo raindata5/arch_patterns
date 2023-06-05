@@ -115,6 +115,12 @@ class Product:
     def allocate(self, order):
         best_batch = utils.allocate_batch(order, self.batches)
         return best_batch
+    
+    def get_batch(self, batch_ref: str):
+        for batch in self.batches:
+            if batch.reference == batch_ref:
+                return batch
+        return False
 
 
 class NoStock(Exception):
