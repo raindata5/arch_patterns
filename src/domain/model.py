@@ -93,6 +93,8 @@ class Batch:
                 returned_ol = order.search_order_line(order_line_sku)
                 self.orders.remove(order)
                 self.available_quantity += returned_ol.quantity
+                return order
+        return None
 
     def __eq__(self, batch_object: Batch) -> bool:
         # return self.eta == batch_object.eta and self.arrived == batch_object.arrived
@@ -120,7 +122,7 @@ class Product:
         for batch in self.batches:
             if batch.reference == batch_ref:
                 return batch
-        return False
+        return None
 
 
 class NoStock(Exception):

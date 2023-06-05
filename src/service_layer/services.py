@@ -68,4 +68,27 @@ def add_batch(event: eve.BatchCreated, unit_of_work:uow.unit_of_work,):
     return batch_instance
 
 def modify_batch_quantity(event: eve.BatchQuantityChanged, unit_of_work:uow.unit_of_work,):
-    pass
+    with unit_of_work as uow:
+        product = uow.get(model.Product, model.Product.sku, event.sku)
+        if product is None:
+            return None
+        product: model.Product
+        queried_batch = product.get_batch(event.batch_reference)
+        queried_batch.available_quantity = event.new_quantity
+        # deallocated_orders = []
+        idx = 0 
+        while queried_batch.available_quantity < 0:
+            queried_order = queried_batch.orders[idx]
+            deallocated_order = queried_batch.deallocate_stock(
+                order_reference=queried_order.order_reference,
+                order_line_sku=queried_batch.sku
+            )
+            # deallocated_orders.append(deallocated_order)
+            product.events.append(
+                eve.AllocationRequired(
+                order_reference=deallocated_order.order_reference,
+                sku=queried_batch.sku
+                )
+            )
+            idx += 1
+        return idx
