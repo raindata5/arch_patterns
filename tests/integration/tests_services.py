@@ -169,6 +169,10 @@ def test_deallocation_made_after_change_in_batch_quantity():
 def test_new_allocation_made_after_change_in_batch_quantity():
     product_nat, order_nat, list_ol = sample_business_objects()
     product_nat.allocate(order=order_nat)
+    sku_ref_natty = utils.random_sku("NaTTY")
+    batch_ref_nat = utils.random_batchref("NaT")
+    batch_nat_02 = model.Batch(reference=batch_ref_nat, sku=list_ol[0].sku, quantity=30, eta=dt.datetime.now(), arrived=False)
+    product_nat.batches.append(batch_nat_02)
     repo = repository.FakeRepository(products=[product_nat], orders=[order_nat,])
     uow_instance = uow.unit_of_work(repo)
     results = message_bus.handle(
