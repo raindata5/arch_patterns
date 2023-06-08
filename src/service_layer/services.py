@@ -74,7 +74,7 @@ def modify_batch_quantity(event: eve.BatchQuantityChanged, unit_of_work:uow.unit
             return None
         product: model.Product
         queried_batch = product.get_batch(event.batch_reference)
-        queried_batch.available_quantity = event.new_quantity
+        queried_batch.available_quantity += event.new_quantity_offset
         # deallocated_orders = []
         idx = 0 
         while queried_batch.available_quantity < 0:
@@ -91,4 +91,5 @@ def modify_batch_quantity(event: eve.BatchQuantityChanged, unit_of_work:uow.unit
                 )
             )
             idx += 1
+        uow.add(product)
         return idx

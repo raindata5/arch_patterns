@@ -26,5 +26,5 @@ class AllocationRequired(Event):
 @dataclass
 class BatchQuantityChanged(Event):
     batch_reference: str
-    new_quantity: int
+    new_quantity_offset: int
     sku: str

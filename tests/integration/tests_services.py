@@ -140,7 +140,7 @@ def test_change_batch_quantity():
     results = message_bus.handle(
         event=event.BatchQuantityChanged(
             batch_reference=product_nat.batches[0].reference,
-            new_quantity=10,
+            new_quantity_offset=-20,
             sku=product_nat.batches[0].sku
         ),
         unit_of_work=uow_instance
@@ -149,5 +149,33 @@ def test_change_batch_quantity():
     assert queried_batch.available_quantity == 10
 
 
+def test_deallocation_made_after_change_in_batch_quantity():
+    product_nat, order_nat, list_ol = sample_business_objects()
+    product_nat.allocate(order=order_nat)
+    repo = repository.FakeRepository(products=[product_nat], orders=[order_nat,])
+    uow_instance = uow.unit_of_work(repo)
+    results = message_bus.handle(
+        event=event.BatchQuantityChanged(
+            batch_reference=product_nat.batches[0].reference,
+            new_quantity_offset=-25,
+            sku=product_nat.batches[0].sku
+        ),
+        unit_of_work=uow_instance
+    )
+    queried_batch=product_nat.get_batch(product_nat.batches[0].reference)
+    assert len(queried_batch.orders) == 0
+    assert queried_batch.available_quantity == 5
+
 def test_new_allocation_made_after_change_in_batch_quantity():
-    pass
+    product_nat, order_nat, list_ol = sample_business_objects()
+    product_nat.allocate(order=order_nat)
+    repo = repository.FakeRepository(products=[product_nat], orders=[order_nat,])
+    uow_instance = uow.unit_of_work(repo)
+    results = message_bus.handle(
+        event=event.BatchQuantityChanged(
+            batch_reference=product_nat.batches[0].reference,
+            new_quantity_offset=-25,
+            sku=product_nat.batches[0].sku
+        ),
+        unit_of_work=uow_instance
+    )
