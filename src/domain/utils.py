@@ -52,9 +52,9 @@ from domain import model
 def allocate_batch(order, batches: List) -> model.Batch:
     # find a way to iterate through batches
     sorted_batches = sorted(batches, reverse=False)
-    # next(b for b in sorted_batches if order_line.verify_allocation(b)  and not order_line.check_allocation_status(b) ) # Do we want this to fail or keep this check here?
-    best_batch = sorted_batches[0]
-    best_batch_result = best_batch.allocate_stock(order)
+    # for b in sorted_batches:
+    #     if best_batch.allocate_stock(order) := best_batch_result
+    best_batch_result = next(b for b in sorted_batches if b.allocate_stock(order))
     return best_batch_result
 
 
