@@ -183,3 +183,5 @@ def test_new_allocation_made_after_change_in_batch_quantity():
         ),
         unit_of_work=uow_instance
     )
+    assert batch_nat_02.available_quantity == 20
+    assert order_nat in batch_nat_02.orders

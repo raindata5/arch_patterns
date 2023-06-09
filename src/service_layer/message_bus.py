@@ -10,7 +10,8 @@ from adapters import (
 messagebus = {
     event.BatchCreated: [services.add_batch],
     event.AllocationRequired: [services.allocate],
-    event.BatchQuantityChanged:[services.modify_batch_quantity]
+    event.BatchQuantityChanged:[services.modify_batch_quantity],
+    event.OutOfStockEvent: [services.null_handler],
 }
 
 def handle(event: event, unit_of_work:uow.unit_of_work):

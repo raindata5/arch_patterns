@@ -54,7 +54,11 @@ def allocate_batch(order, batches: List) -> model.Batch:
     sorted_batches = sorted(batches, reverse=False)
     # for b in sorted_batches:
     #     if best_batch.allocate_stock(order) := best_batch_result
-    best_batch_result = next(b for b in sorted_batches if b.allocate_stock(order))
+    try:
+        best_batch_result = next(b for b in sorted_batches if b.allocate_stock(order))
+    except StopIteration as ex:
+        logging.info(ex)
+        return None
     return best_batch_result
 
 

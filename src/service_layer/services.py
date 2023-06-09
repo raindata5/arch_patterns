@@ -93,3 +93,6 @@ def modify_batch_quantity(event: eve.BatchQuantityChanged, unit_of_work:uow.unit
             idx += 1
         uow.add(product)
         return idx
+    
+def null_handler(*args, **kwargs):
+    return None
