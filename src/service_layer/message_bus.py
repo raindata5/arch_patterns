@@ -14,6 +14,10 @@ messagebus = {
     event.OutOfStockEvent: [services.null_handler],
 }
 
+EVENT_HANDLERS = {
+    
+}
+
 def handle(event: event, unit_of_work:uow.unit_of_work):
     results = []
     queue = [event]
