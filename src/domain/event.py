@@ -19,7 +19,7 @@ class BatchCreated(Event):
     ref: Union[str, None]= None
 
 @dataclass
-class AllocationRequired(Event):
+class BatchAllocated(Event):
     order_reference: str
     sku: str
 
