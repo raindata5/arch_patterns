@@ -31,10 +31,20 @@ HANDLERS = {
 }
 
 def handle_event(event: event.Event, queue, unit_of_work:uow.unit_of_work):
-    pass
+    for handler in EVENT_HANDLERS[type(event)]:
+        obj = handler(event, unit_of_work)
+        queue.extend(unit_of_work.repo.collect_new_events())
+
+    
 
 def handle_command(command: command.Command, queue, unit_of_work:uow.unit_of_work):
-    pass
+    try:
+        handler = COMMAND_HANDLERS[type(command)]
+        obj = handler(command, unit_of_work) 
+        queue.extend(unit_of_work.repo.collect_new_events())
+    except Exception as ex:
+        raise ex
+    return obj
 
 
 def handle(message: Message, unit_of_work:uow.unit_of_work):
@@ -42,17 +52,17 @@ def handle(message: Message, unit_of_work:uow.unit_of_work):
     queue = [message]
     # with unit_of_work as uow:
     while len(queue) > 0:
-        event_popped = queue.pop(0)
-        struct_handler = HANDLERS[event_popped.__base__]
-        if struct_handler == COMMAND_HANDLERS:
-            pass
-        elif struct_handler == EVENT_HANDLERS:
-            pass
-        for handler in struct_handler[type(event_popped)]:
-            obj = handler(event_popped, unit_of_work)
+        message_popped = queue.pop(0)
+        if isinstance(message_popped, command.Command):
+            obj = handle_command(message_popped, queue, unit_of_work)
             if obj:
                 results.append(obj)
-            queue.extend(unit_of_work.repo.collect_new_events())
+        elif isinstance(message_popped, event.Event):
+            handle_event(message_popped, queue, unit_of_work)
+            # obj = handle_event(message_popped, queue, unit_of_work)
+            # if obj:
+            #     results.append(obj)
+
     return results
 
     #         obj_popped = uow.seen.pop()
