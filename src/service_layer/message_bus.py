@@ -9,6 +9,12 @@ from adapters import (
 )
 from typing import Union
 import logging
+from tenacity import (
+    Retrying,
+    RetryError,
+    stop_after_attempt,
+    wait_exponential
+)
 # messagebus = {
 #     event.BatchCreated: [services.add_batch],
 #     event.BatchQuantityChanged:[services.modify_batch_quantity],
@@ -18,7 +24,7 @@ import logging
 Message = Union[command.Command, event.Event]
 
 EVENT_HANDLERS = {
-    event.BatchCreated: [services.add_batch],
+    # event.BatchCreated: [services.add_batch],
     # event.BatchQuantityChanged:[services.modify_batch_quantity],
     event.OutOfStockEvent: [services.null_handler],
 }
@@ -35,10 +41,12 @@ HANDLERS = {
 def handle_event(event: event.Event, queue, unit_of_work:uow.unit_of_work):
     for handler in EVENT_HANDLERS[type(event)]:
         try:
-            logging.debug(f"Handling {event} with {handler}")
-            obj = handler(event, unit_of_work)
-            queue.extend(unit_of_work.repo.collect_new_events())
-        except Exception as ex:
+            for attempt in Retrying(stop=stop_after_attempt(3), wait=wait_exponential()):
+                with attempt:
+                    logging.debug(f"Handling {event} with {handler}")
+                    obj = handler(event, unit_of_work)
+                    queue.extend(unit_of_work.repo.collect_new_events())
+        except RetryError as ex:
             logging.exception(f'Exception raised when handling {event}')
             continue
 
@@ -48,7 +56,7 @@ def handle_event(event: event.Event, queue, unit_of_work:uow.unit_of_work):
 def handle_command(command: command.Command, queue, unit_of_work:uow.unit_of_work):
     try:
         handler = COMMAND_HANDLERS[type(command)]
-        obj = handler(command, unit_of_work) 
+        obj = handler[0](command, unit_of_work) 
         queue.extend(unit_of_work.repo.collect_new_events())
     except Exception as ex:
         raise ex

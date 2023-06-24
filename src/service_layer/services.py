@@ -30,7 +30,7 @@ class InvalidSkuReference(Exception):
 def allocate(command: comm.Allocate, unit_of_work:uow.unit_of_work,):
     with unit_of_work as uow:   
         try:
-            queried_order: Union[model.Order, Any] = uow.get(model.Order, model.Order.order_reference, event.order_reference)
+            queried_order: Union[model.Order, Any] = uow.get(model.Order, model.Order.order_reference, command.order_reference)
             if not queried_order:
                 raise InvalidOrderReference()
             logging.info(queried_order)

@@ -7,7 +7,8 @@ from typing import (
 )
 from domain import (
     model,
-    event
+    event,
+    command
 )
 from service_layer import services, message_bus
 from domain import utils
@@ -39,7 +40,7 @@ def test_allocate_batch():
     product_nat_02, order_nat_02, list_ol_02 = sample_business_objects()
     repo_fake = repository.FakeRepository([product_nat, product_nat_02], [order_nat, order_nat_02])
     uow_instance = uow.unit_of_work(repo_fake) 
-    event_new = event.AllocationRequired(
+    event_new = command.Allocate(
         order_reference=order_nat.order_reference,
         sku=list_ol[0].sku
     )
@@ -57,7 +58,7 @@ def test_allocate_stock_returns_404_no_sku_found():
     repo = repository.FakeRepository([product_nat], [order_nat,])
     uow_instance = uow.unit_of_work(repo) 
     list_ol[0].sku = 'fake_nat_sku'
-    event_new = event.AllocationRequired(
+    event_new = command.Allocate(
         order_reference=order_nat.order_reference,
         sku=list_ol[0].sku
     )
@@ -74,7 +75,7 @@ def test_allocate_stock_returns_no_stock():
     repo = repository.FakeRepository([product_nat], [order_nat,])
     uow_instance = uow.unit_of_work(repo)
     # with pytest.raises(model.NoStock):
-    event_new = event.AllocationRequired(
+    event_new = command.Allocate(
         order_reference=order_nat.order_reference,
         sku=list_ol[0].sku
     )
@@ -82,7 +83,7 @@ def test_allocate_stock_returns_no_stock():
         event_new,
         uow_instance
     )   
-    inserted_batch=results[0]
+    # inserted_batch=results[0]
     event_ret = list(repo.collect_new_events())[0]
     assert type(event_ret) == event.OutOfStockEvent 
     
@@ -92,7 +93,7 @@ def test_allocate_order_to_batch_if_already_allocated_idempotent():
     repo = repository.FakeRepository([product_nat], [order_nat,])
     for _ in range(2):
         best_batch = services.allocate(
-            event.AllocationRequired(
+            command.Allocate(
                 order_reference=order_nat.order_reference,
                 sku=list_ol[0].sku
             ),
@@ -108,7 +109,7 @@ def test_do_not_allocate_if_no_matching_sku_found():
     uow_instance = uow.unit_of_work(repo)
     # with pytest.raises(services.InvalidOrderReference):
     results = services.allocate(
-        event.AllocationRequired(
+        command.Allocate(
             order_reference=order_nat.order_reference,
             sku=list_ol[0].sku
         ),
@@ -121,7 +122,7 @@ def test_add_batch():
     uow_instance = uow.unit_of_work(repo)
     batch_ref=utils.random_batchref("batch")
     results = message_bus.handle(
-        event=event.BatchCreated(
+        message=command.CreateBatch(
                 sku=product_nat.sku,
                 quantity=product_nat.batches[0].quantity,
                 ref=batch_ref
@@ -138,7 +139,7 @@ def test_change_batch_quantity():
     repo = repository.FakeRepository(products=[product_nat], orders=[order_nat,])
     uow_instance = uow.unit_of_work(repo)
     results = message_bus.handle(
-        event=event.BatchQuantityChanged(
+        message=command.ChangeBatchQuantity(
             batch_reference=product_nat.batches[0].reference,
             new_quantity_offset=-20,
             sku=product_nat.batches[0].sku
@@ -155,7 +156,7 @@ def test_deallocation_made_after_change_in_batch_quantity():
     repo = repository.FakeRepository(products=[product_nat], orders=[order_nat,])
     uow_instance = uow.unit_of_work(repo)
     results = message_bus.handle(
-        event=event.BatchQuantityChanged(
+        message=command.ChangeBatchQuantity(
             batch_reference=product_nat.batches[0].reference,
             new_quantity_offset=-25,
             sku=product_nat.batches[0].sku
@@ -176,7 +177,7 @@ def test_new_allocation_made_after_change_in_batch_quantity():
     repo = repository.FakeRepository(products=[product_nat], orders=[order_nat,])
     uow_instance = uow.unit_of_work(repo)
     results = message_bus.handle(
-        event=event.BatchQuantityChanged(
+        message=command.ChangeBatchQuantity(
             batch_reference=product_nat.batches[0].reference,
             new_quantity_offset=-25,
             sku=product_nat.batches[0].sku
