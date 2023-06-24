@@ -24,6 +24,7 @@ architecture-patterns = {editable = true, path = "."}
 httpx = "*"
 requests = "*"
 psycopg2 = "*"
+tenacity = "*"
 
 [dev-packages]
 

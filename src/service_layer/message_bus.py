@@ -8,6 +8,7 @@ from adapters import (
     uow
 )
 from typing import Union
+import logging
 # messagebus = {
 #     event.BatchCreated: [services.add_batch],
 #     event.BatchQuantityChanged:[services.modify_batch_quantity],
@@ -18,12 +19,13 @@ Message = Union[command.Command, event.Event]
 
 EVENT_HANDLERS = {
     event.BatchCreated: [services.add_batch],
-    event.BatchQuantityChanged:[services.modify_batch_quantity],
+    # event.BatchQuantityChanged:[services.modify_batch_quantity],
     event.OutOfStockEvent: [services.null_handler],
 }
 COMMAND_HANDLERS = {
     command.CreateBatch: [services.add_batch],
     command.Allocate: [services.allocate],
+    command.ChangeBatchQuantity: [services.modify_batch_quantity]
 }
 HANDLERS = {
     command.Command: COMMAND_HANDLERS,
@@ -32,8 +34,14 @@ HANDLERS = {
 
 def handle_event(event: event.Event, queue, unit_of_work:uow.unit_of_work):
     for handler in EVENT_HANDLERS[type(event)]:
-        obj = handler(event, unit_of_work)
-        queue.extend(unit_of_work.repo.collect_new_events())
+        try:
+            logging.debug(f"Handling {event} with {handler}")
+            obj = handler(event, unit_of_work)
+            queue.extend(unit_of_work.repo.collect_new_events())
+        except Exception as ex:
+            logging.exception(f'Exception raised when handling {event}')
+            continue
+
 
     
 
@@ -62,6 +70,8 @@ def handle(message: Message, unit_of_work:uow.unit_of_work):
             # obj = handle_event(message_popped, queue, unit_of_work)
             # if obj:
             #     results.append(obj)
+        else:
+            raise Exception(f"{message_popped} of type: {type(message_popped)} not supported")
 
     return results
 
