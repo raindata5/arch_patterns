@@ -9,6 +9,7 @@ from typing import (
 )
 from entrypoints.config import settings
 import json
+from domain import utils
 
 client = TestClient(app)
 
@@ -99,3 +100,12 @@ def test_add_batch_returns_201(get_sql_repo):
     assert res.json()["arrived"] == False
     assert res.json()["available_quantity"] == batch_body["quantity"]
     assert res.json()["sku"] == batch_body["sku"]
+
+def test_change_batch_quantity():
+    sku_ref_natty, sku_ref_natty_01 = utils.random_sku("NaTTY"), utils.random_sku("NaTTY_01")
+    batch_ref_nat = utils.random_batchref("NaT")
+    order_ref_nat = utils.random_orderid("nat_order")
+    res = requests.post(f"{settings.api_url}/change_batch_quantity", json=None)
+    res_json = res.json()
+    assert res.status_code == 201
+    assert res.json()
