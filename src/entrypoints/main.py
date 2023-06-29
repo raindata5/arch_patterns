@@ -17,7 +17,8 @@ from service_layer.services import (
     allocate,
     InvalidOrderReference,
     InvalidSkuReference,
-    add_batch
+    add_batch,
+    modify_batch_quantity
 )
 from domain.utils import (
     allocate_batch
@@ -69,6 +70,10 @@ def allocate_batch_ep(order_reference: model.OrderReference, sku: model.Sku):
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=F"order:{ex.order_reference} not containing an order_line with the following sku: {sku.sku}")
     return best_batch
 
+@app.post("/change_batch_quantity", status_code=status.HTTP_201_CREATED,):
+def change_batch_quantity(batch_reference: model.ChangeBatchQuantityObj):
+    comm = command.ChangeBatchQuantity(**batch_reference.dict())
+    idx = modify_batch_quantity(command=comm, unit_of_work=uow.unit_of_work(sql_repo))
 
     # try:
     #     queried_order: Union[model.Order, Any] = sql_repo.get(model.Order, model.Order.order_reference, order_reference.order_reference)
