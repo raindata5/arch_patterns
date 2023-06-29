@@ -25,6 +25,7 @@ httpx = "*"
 requests = "*"
 psycopg2 = "*"
 tenacity = "*"
+redis = "*"
 
 [dev-packages]
 

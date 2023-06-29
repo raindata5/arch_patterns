@@ -36,3 +36,9 @@ services:
             - VAULT_DEV_ROOT_TOKEN_ID=dev-only-token
         volumes:
             - /config:/vault/config.d
+    redis:
+      image: redis
+      volumes:
+        - arch-patterns-redis-db:/data
+      ports: 
+        - 6379:6379
