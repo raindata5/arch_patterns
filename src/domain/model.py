@@ -141,3 +141,8 @@ class PreBatchInstance(BaseModel):
     quantity: int
     eta: Union[dt.datetime, None]
     arrived: Union[bool, None]
+    
+class ChangeBatchQuantityObj(BaseModel):
+    batch_reference: str
+    sku: str
+    new_quantity_offset: int

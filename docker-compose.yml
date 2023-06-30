@@ -38,7 +38,7 @@ services:
             - /config:/vault/config.d
     redis:
       image: redis
-      volumes:
-        - arch-patterns-redis-db:/data
+    #   volumes:
+        # - arch-patterns-redis-db:/data
       ports: 
         - 6379:6379
