@@ -26,6 +26,7 @@ Message = Union[command.Command, event.Event]
 EVENT_HANDLERS = {
     # event.BatchCreated: [services.add_batch],
     # event.BatchQuantityChanged:[services.modify_batch_quantity],
+    event.Allocated: [services.publish_allocated_event],
     event.OutOfStockEvent: [services.null_handler],
 }
 COMMAND_HANDLERS = {

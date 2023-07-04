@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from entrypoints.main import app
+from entrypoints.event_publisher import publish
 import requests
-from domain import model
 from typing import (
     Tuple,
     List,
@@ -9,8 +9,12 @@ from typing import (
 )
 from entrypoints.config import settings
 import json
-from domain import utils
-
+from domain import (
+    model,
+    event,
+    command,
+    utils,
+)
 client = TestClient(app)
 
 def test_read_main_root(get_sql_repo):
@@ -100,6 +104,27 @@ def test_add_batch_returns_201(get_sql_repo):
     assert res.json()["arrived"] == False
     assert res.json()["available_quantity"] == batch_body["quantity"]
     assert res.json()["sku"] == batch_body["sku"]
+
+
+def test_allocate_from_channel(return_base_sample_data,):
+    product_nat, order_nat, list_ol = return_base_sample_data
+    product_nat: model.Product
+    order_nat: model.Order
+    list_ol: List[model.OrderLine]
+
+    command_allocate = command.Allocate(
+        order_reference=order_nat.order_reference,
+        sku=product_nat.sku
+    )
+    publish(
+        channel="allocate",
+        message=command_allocate
+    )
+    reference_batch = product_nat.batches[0].reference
+    retreived_batch = product_nat.get_batch(reference_batch)
+    assert retreived_batch.available_quantity == 20
+
+
 
 def test_change_batch_quantity():
     sku_ref_natty, sku_ref_natty_01 = utils.random_sku("NaTTY"), utils.random_sku("NaTTY_01")

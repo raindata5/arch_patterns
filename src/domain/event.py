@@ -19,9 +19,11 @@ class BatchCreated(Event):
     ref: Union[str, None]= None
 
 @dataclass
-class BatchAllocated(Event):
+class Allocated(Event):
+    batch_reference: str
     order_reference: str
     sku: str
+    quantity: int
 
 @dataclass
 class BatchQuantityChanged(Event):

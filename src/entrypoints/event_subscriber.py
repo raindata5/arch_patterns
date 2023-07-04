@@ -3,6 +3,13 @@ from service_layer import services
 import json
 from domain import command
 import logging
+logging.basicConfig()
+logging.getLogger().setLevel(logging.DEBUG)
+from service_layer import (
+    message_bus,
+)
+from adapters import uow
+
 # get redis params
 # connect to redis
 # subscribe to relevant channel
@@ -17,13 +24,15 @@ pubsub = r.pubsub(
     ignore_subscribe_messages=True
 )
 pubsub.subscribe(
-    "change_batch_quantity"
+    "change_batch_quantity",
+    "allocate",
 )
 def handle_change_batch_quantity(message):
-    logging.info(msg = f" Pulled {message}")
+    logging.debug(msg = f" Pulled {message}")
 
 def main():
     for m in pubsub.listen():
+        # message_bus.handle(m, unit_of_work=uow.unit_of_work())
         handle_change_batch_quantity(m)
 
 if __name__ == "__main__":

@@ -1,7 +1,9 @@
 from domain import utils
 from domain import event as eve
 from domain import command as comm
-
+from entrypoints.event_publisher import (
+    publish
+)
 import domain.model as model
 import adapters.repository as repository
 from typing import (
@@ -48,6 +50,14 @@ def allocate(command: comm.Allocate, unit_of_work:uow.unit_of_work,):
             if not best_batch:
                 product.events.append(eve.OutOfStockEvent(sku=command.sku))
                 uow.add(product)
+            product.events.append(
+                eve.Allocated(
+                    batch_reference=best_batch.reference,
+                    order_reference=queried_order.order_reference,
+                    sku=sku_order_line,
+                    quantity=best_batch.available_quantity
+                )
+            )
         except (InvalidSkuReference, InvalidOrderReference, ) as ex:
             raise ex
         uow.commit()
@@ -95,6 +105,10 @@ def modify_batch_quantity(command: comm.ChangeBatchQuantity, unit_of_work:uow.un
             idx += 1
         uow.add(product)
         return idx
-    
+
+def publish_allocated_event(command: eve.Allocated, unit_of_work:uow.unit_of_work,):
+    publish("order_allocated", command)
+
+
 def null_handler(*args, **kwargs):
     return None
