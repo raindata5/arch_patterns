@@ -2,7 +2,7 @@ from sqlalchemy import Table, Column, Integer, String, ForeignKey, DateTime, Boo
 from sqlalchemy.orm import registry, relationship, sessionmaker
 from sqlalchemy.sql import func
 from domain import model
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, select, event
 import datetime as dt
 from sqlalchemy.pool import StaticPool
 from domain import utils
@@ -155,6 +155,10 @@ mapper_registry.metadata.create_all(
     bind=(engine)
 )
 
+@event.listens_for(model.Product, "load")
+def receive_load(product, _):
+    product.events = []
+
 if __name__ == "__main__":
 
     with Session() as session:
@@ -172,4 +176,3 @@ if __name__ == "__main__":
         patrick: model.Batch
         session.commit()
         
-

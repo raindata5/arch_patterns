@@ -67,7 +67,6 @@ def handle_command(command: command.Command, queue, unit_of_work:uow.unit_of_wor
 def handle(message: Message, unit_of_work:uow.unit_of_work):
     results = []
     queue = [message]
-    # with unit_of_work as uow:
     while len(queue) > 0:
         message_popped = queue.pop(0)
         if isinstance(message_popped, command.Command):

@@ -58,6 +58,7 @@ def allocate(command: comm.Allocate, unit_of_work:uow.unit_of_work,):
                     quantity=best_batch.available_quantity
                 )
             )
+            uow.add(product)
         except (InvalidSkuReference, InvalidOrderReference, ) as ex:
             raise ex
         uow.commit()

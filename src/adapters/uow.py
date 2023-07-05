@@ -6,6 +6,7 @@ from typing import (
 )
 import adapters.repository as repository
 import logging
+from adapters.orm import Session
 
 class unit_of_work:
     def __init__(self, repo:Type[repository.Repository]) -> None:
