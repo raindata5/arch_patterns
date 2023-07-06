@@ -35,6 +35,7 @@ repo = repository.SqlRepository(Session())
 CHANNELS = {
     'allocate': command.Allocate,
     'change_batch_quantity': command.ChangeBatchQuantity,
+    'order_allocated': event.Allocated
 }
 
 r = redis.Redis(
@@ -48,6 +49,7 @@ pubsub = r.pubsub(
 pubsub.subscribe(
     "change_batch_quantity",
     "allocate",
+    "order_allocated"
 )
 def handle_change_batch_quantity(message):
     logging.debug(msg = f" Pulled {message}")

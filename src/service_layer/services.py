@@ -50,15 +50,17 @@ def allocate(command: comm.Allocate, unit_of_work:uow.unit_of_work,):
             if not best_batch:
                 product.events.append(eve.OutOfStockEvent(sku=command.sku))
                 uow.add(product)
-            product.events.append(
-                eve.Allocated(
-                    batch_reference=best_batch.reference,
-                    order_reference=queried_order.order_reference,
-                    sku=sku_order_line,
-                    quantity=best_batch.available_quantity
+            elif best_batch:
+                product.events.append(
+                    eve.Allocated(
+                        batch_reference=best_batch.reference,
+                        order_reference=queried_order.order_reference,
+                        sku=sku_order_line,
+                        quantity=best_batch.available_quantity
+                    )
                 )
-            )
             uow.add(product)
+            logging.info(f"reserialized {product}")
         except (InvalidSkuReference, InvalidOrderReference, ) as ex:
             raise ex
         uow.commit()
@@ -105,6 +107,7 @@ def modify_batch_quantity(command: comm.ChangeBatchQuantity, unit_of_work:uow.un
             )
             idx += 1
         uow.add(product)
+        uow.commit()
         return idx
 
 def publish_allocated_event(command: eve.Allocated, unit_of_work:uow.unit_of_work,):

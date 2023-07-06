@@ -15,6 +15,20 @@ from domain import (
     command,
     utils,
 )
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+from entrypoints.config import settings
+from adapters import (
+    repository
+)
+import time
+
+engine = create_engine(f"postgresql://{settings.pg_oltp_api_user}:{settings.pg_oltp_api_password}@{settings.pg_oltp_api_host}:{settings.pg_oltp_api_port}", echo=True,)
+
+print(f"postgresql://{settings.pg_oltp_api_user}:{settings.pg_oltp_api_password}@{settings.pg_oltp_api_host}:{settings.pg_oltp_api_port}")
+Session = sessionmaker(bind=engine, expire_on_commit=True)
+
+
 client = TestClient(app)
 
 def test_read_main_root(get_sql_repo):
@@ -120,19 +134,55 @@ def test_allocate_from_channel(return_base_sample_data,):
         channel="allocate",
         message=command_allocate
     )
-    reference_batch = product_nat.batches[0].reference
-    retreived_batch = product_nat.get_batch(reference_batch)
+    repo=repository.SqlRepository(Session())
+
+    retreived_product = repo.get(model.Product, model.Product.sku, product_nat.sku)
+    reference_batch = retreived_product.batches[0].reference
+    retreived_batch = retreived_product.get_batch(reference_batch)
+
     assert retreived_batch.available_quantity == 20
 
 
 
-def test_change_batch_quantity():
-    sku_ref_natty, sku_ref_natty_01 = utils.random_sku("NaTTY"), utils.random_sku("NaTTY_01")
-    batch_ref_nat = utils.random_batchref("NaT")
-    order_ref_nat = utils.random_orderid("nat_order")
+def test_change_batch_quantity(return_base_sample_data):
+    product_nat, order_nat, list_ol = return_base_sample_data
+    product_nat: model.Product
+    order_nat: model.Order
+    list_ol: List[model.OrderLine]
+
+    command_allocate = command.Allocate(
+        order_reference=order_nat.order_reference,
+        sku=product_nat.sku
+    )
+    
+    publish(
+        channel="allocate",
+        message=command_allocate
+    )
+
+    time.sleep(5)
+    command_cbq = command.ChangeBatchQuantity(
+        batch_reference=product_nat.batches[0].reference,
+        new_quantity_offset=-30,
+        sku=product_nat.batches[0].sku
+    )
+
+    publish(
+        channel="change_batch_quantity",
+        message=command_cbq
+    )
+
+    repo=repository.SqlRepository(Session())
+
+    time.sleep(5)
+    retreived_product = repo.get(model.Product, model.Product.sku, product_nat.sku)
+    reference_batch = retreived_product.batches[0].reference
+    retreived_batch = retreived_product.get_batch(reference_batch)
+
+    assert retreived_batch.available_quantity == 0
 
 
-
+    # retreived_product = repo.get(model.Order, model.Product.sku, product_nat.sku)
     # res = requests.post(f"{settings.api_url}/change_batch_quantity", json=None)
     # res_json = res.json()
     # assert res.status_code == 201

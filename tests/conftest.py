@@ -10,7 +10,7 @@ from sqlalchemy import create_engine
 import datetime as dt
 from domain import utils
 from entrypoints.config import settings
-from adapters.orm import Session
+# from adapters.orm import Session
 from adapters import (
     uow,
     repository
