@@ -32,6 +32,7 @@ from domain import (
     event,
     command
 )
+from starlette.responses import RedirectResponse
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -52,9 +53,11 @@ def read_batch(batch_reference: str):
 
 @app.post("/batches",  status_code=status.HTTP_201_CREATED,)
 def add_batch_ep(batch_info: model.PreBatchInstance):
-    event_new = command.CreateBatch(**batch_info.dict())
-    inserted_batch = add_batch(event=event_new, unit_of_work=uow.unit_of_work(sql_repo))
-    return inserted_batch
+    cmd_new = command.CreateBatch(**batch_info.dict())
+    inserted_batch = add_batch(command=cmd_new, unit_of_work=uow.unit_of_work(sql_repo))
+    inserted_batch: model.Batch
+    retrieved_batch = RedirectResponse(url=f"/batch/{inserted_batch.reference}", status_code=303)
+    return retrieved_batch
 
 @app.post("/allocate", status_code=status.HTTP_201_CREATED, )
 def allocate_batch_ep(order_reference: model.OrderReference, sku: model.Sku):
