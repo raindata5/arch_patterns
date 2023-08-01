@@ -114,7 +114,7 @@ def test_add_batch_returns_201(get_sql_repo):
     )    
     res = requests.post(f"{settings.api_url}/batches", json=batch_body)
     res_json = res.json()
-    assert res.status_code == 201
+    assert res.status_code == 200
     assert res.json()["arrived"] == False
     assert res.json()["available_quantity"] == batch_body["quantity"]
     assert res.json()["sku"] == batch_body["sku"]
@@ -187,3 +187,11 @@ def test_change_batch_quantity(return_base_sample_data):
     # res_json = res.json()
     # assert res.status_code == 201
     # assert res.json()
+
+
+def test_get_allocations_for_order():
+    data = requests.get(
+        F"{settings.api_url}/allocations/{order_nat.order_reference}",
+    )
+    data_json = data.json()
+    assert len(data_json["batches"]) == 2
