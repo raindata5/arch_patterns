@@ -189,9 +189,21 @@ def test_change_batch_quantity(return_base_sample_data):
     # assert res.json()
 
 
-def test_get_allocations_for_order():
+def test_get_allocations_for_order(return_base_sample_data):
+    product_nat, order_nat, list_ol = return_base_sample_data
+    product_nat: model.Product
+    order_nat: model.Order
+    list_ol: List[model.OrderLine]
+
+    order_nat_ref = order_nat.order_reference
+    sku_body = dict(sku=list_ol[0].sku)
+    order_ref_body = dict(order_reference=order_nat_ref,)
+    data_sku_order = dict(order_reference=order_ref_body, sku=sku_body)
+    res = requests.post(f"{settings.api_url}/allocate", json=data_sku_order)
+
     data = requests.get(
-        F"{settings.api_url}/allocations/{order_nat.order_reference}",
+        F"{settings.api_url}/allocations/{order_nat_ref}",
     )
     data_json = data.json()
-    assert len(data_json["batches"]) == 2
+    assert len(data_json["allocations"]) == 1
+    assert data_json["allocations"][0]['batch_reference'] == product_nat.batches[0].reference

@@ -32,7 +32,11 @@ from domain import (
     event,
     command
 )
-from starlette.responses import RedirectResponse
+# from starlette.responses import RedirectResponse
+from service_layer import (
+    views
+)
+from fastapi.responses import JSONResponse, RedirectResponse
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -73,10 +77,21 @@ def allocate_batch_ep(order_reference: model.OrderReference, sku: model.Sku):
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=F"order:{ex.order_reference} not containing an order_line with the following sku: {sku.sku}")
     return best_batch
 
+@app.get("/allocations/{order_reference}")
+def read_order_allocations(order_reference: str) -> list:
+    
+    results = views.allocations(
+        order_reference,
+        unit_of_work=uow.unit_of_work(sql_repo)
+    )
+    return JSONResponse({"allocations": list(results)})
+
 @app.post("/change_batch_quantity", status_code=status.HTTP_201_CREATED,)
 def change_batch_quantity(batch_reference: model.ChangeBatchQuantityObj):
     comm = command.ChangeBatchQuantity(**batch_reference.dict())
     idx = modify_batch_quantity(command=comm, unit_of_work=uow.unit_of_work(sql_repo))
+
+
 
     # try:
     #     queried_order: Union[model.Order, Any] = sql_repo.get(model.Order, model.Order.order_reference, order_reference.order_reference)
@@ -104,17 +119,3 @@ def change_batch_quantity(batch_reference: model.ChangeBatchQuantityObj):
 # class ShippingState(IntEnum):
 #     pass
 # TODO: Refactor this descriptor that is far too specific (business logic contained)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
