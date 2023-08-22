@@ -4,12 +4,13 @@ from typing import (
     Union,
     Any,
 )
-import adapters.repository as repository
+# from adapters.repository import Repository
 import logging
 from adapters.orm import Session
 
 class unit_of_work:
-    def __init__(self, repo:Type[repository.Repository]) -> None:
+    # def __init__(self, repo:Type[Repository]) -> None:
+    def __init__(self, repo) -> None:
         self.repo = repo
 
     def __enter__(self):

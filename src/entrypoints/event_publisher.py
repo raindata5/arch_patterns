@@ -7,10 +7,14 @@ from dataclasses import asdict
 # subscribe to relevant channel
 # take message and pass to message bus
 
+
+
 r = redis.Redis(
     host='redis',
     port=6379
 )
+
+
 
 def publish(channel:str, message):
     logging.info(f"publishing {message} to channel:{channel}")

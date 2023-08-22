@@ -1,11 +1,9 @@
 from domain import model
 import datetime as dt
 import pytest
-from domain import utils
 import logging
 import psycopg2
 from sqlalchemy.orm import sessionmaker
-from domain import model
 from sqlalchemy import create_engine
 import datetime as dt
 from domain import utils

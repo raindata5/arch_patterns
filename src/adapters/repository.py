@@ -9,6 +9,15 @@ from typing import (
     List,
     Union
 )
+import redis
+import logging
+import json
+from dataclasses import asdict
+from service_layer.message_bus import MessageBus
+from domain import (
+    event,
+    command
+)
 
 class Repository(abc.ABC):
 
@@ -105,3 +114,41 @@ class FakeRepository(Repository):
 
     def close(self):
         pass
+
+class RedisClient(Repository):
+    CHANNELS = {
+        'allocate': command.Allocate,
+        'change_batch_quantity': command.ChangeBatchQuantity,
+        'order_allocated': event.Allocated
+    }
+    def __init__(
+        self,
+        r: redis.Redis,
+    ) -> None:
+        self.r: redis.Redis = r
+        # self.uow: unit_of_work = uow
+        # self.message_bus: MessageBus = message_bus
+        self.seen = []
+
+    def add(self, channel, message):
+        logging.info(f"publishing {message} to channel:{channel}")
+        self.r.publish(channel=channel, message=json.dumps(asdict(message)))
+
+    def get(self, message_bus):
+        pubsub = self.r.pubsub(
+            ignore_subscribe_messages=True
+        )
+        pubsub.subscribe(
+            "change_batch_quantity",
+            "allocate",
+            "order_allocated"
+        )
+        for m in pubsub.listen():
+            message_dict = m
+            message_channel: bytes = message_dict["channel"]
+            message_data: bytes = message_dict["data"]
+            message_type = self.CHANNELS.get(message_channel.decode()) 
+            message_obj_dict = json.loads(message_data)
+            message_obj = message_type(**message_obj_dict)
+            message_bus.handle(message_obj)
+            # message_bus.handle(message_obj, unit_of_work=self.uow)

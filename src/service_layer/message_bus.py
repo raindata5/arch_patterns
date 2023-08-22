@@ -34,10 +34,7 @@ COMMAND_HANDLERS = {
     command.Allocate: [services.allocate],
     command.ChangeBatchQuantity: [services.modify_batch_quantity]
 }
-HANDLERS = {
-    command.Command: COMMAND_HANDLERS,
-    event.Event: EVENT_HANDLERS
-}
+
 
 def handle_event(event: event.Event, queue, unit_of_work:uow.unit_of_work):
     for handler in EVENT_HANDLERS[type(event)]:
@@ -83,8 +80,7 @@ def handle(message: Message, unit_of_work:uow.unit_of_work):
 
     return results
 
-    #         obj_popped = uow.seen.pop()
-    #             [
-    #         handle(eve) for eve in obj_popped.events
-    #         if eve
-    #         ]
+class MessageBus:
+
+    def __init__(self) -> None:
+        pass

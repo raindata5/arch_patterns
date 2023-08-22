@@ -4,11 +4,6 @@ from typing import (
     Any
 )
 
-from fastapi import (
-    FastAPI,
-    status,
-    HTTPException
-)
 
 from adapters.orm import Session
 import adapters.repository as repository
@@ -32,20 +27,42 @@ from domain import (
     event,
     command
 )
-# from starlette.responses import RedirectResponse
 from service_layer import (
     views
 )
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi import (
+    FastAPI,
+    status,
+    HTTPException,
+    Request
+)
+from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 # TODO: Does this use the same session repeatedly? Should be instantiated in endpoint?
 sql_repo = repository.SqlRepository(Session())
 app = FastAPI()
-@app.get("/")
-def read_root():
-    return {"msg": "Hello World"}
+
+templates = Jinja2Templates(directory="src/templates")
+
+@app.get("/", response_class=HTMLResponse)
+def read_root(request: Request):
+    # return {"msg": "Hello World"}
+    # return HTMLResponse(content = '<button> click me </button>', status_code=200)
+    return HTMLResponse(content = f'''<button> click me Mr.{request.headers.get('User-Agent')} </button>''', status_code=200)
+
+@app.get("/batches/{batch_reference}", response_class=HTMLResponse)
+def batches(request: Request, batch_reference: str):
+    uow_tmp = uow.unit_of_work(sql_repo)
+    with uow_tmp as repo:
+        queried_batch = repo.get(model.Batch, model.Batch.reference, batch_reference)
+        sql_repo.commit()
+    queried_batch: model.Batch
+    return templates.TemplateResponse(
+        "batch.html", {"batch_ref": queried_batch.reference or 'NULL', "request": request}
+    )
 
 @app.get("/batch/{batch_reference}")
 def read_batch(batch_reference: str):

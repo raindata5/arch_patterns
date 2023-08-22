@@ -26,6 +26,8 @@ requests = "*"
 psycopg2 = "*"
 tenacity = "*"
 redis = "*"
+jinja2 = "*"
+pydantic-settings = "*"
 
 [dev-packages]
 
