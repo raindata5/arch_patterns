@@ -87,7 +87,7 @@ class MessageBus:
         self.command_handlers = command_handlers
         self.uow = uow
 
-    def handle(message: Message):
+    def handle(self, message: Message):
         results = []
         queue = [message]
         while len(queue) > 0:
@@ -104,24 +104,24 @@ class MessageBus:
             else:
                 raise Exception(f"{message_popped} of type: {type(message_popped)} not supported")
 
-    def handle_command(command: command.Command, queue):
+    def handle_command(self, command: command.Command, queue):
         try:
             handler = COMMAND_HANDLERS[type(command)]
             obj = handler[0](command) 
-            queue.extend(unit_of_work.repo.collect_new_events())
+            queue.extend(self.uow.repo.collect_new_events())
         except Exception as ex:
             raise ex
         return obj
-    return results
+        return results
 
-    def handle_event(event: event.Event, queue):
+    def handle_event(self, event: event.Event, queue):
         for handler in EVENT_HANDLERS[type(event)]:
             try:
                 for attempt in Retrying(stop=stop_after_attempt(3), wait=wait_exponential()):
                     with attempt:
                         logging.debug(f"Handling {event} with {handler}")
                         obj = handler(event)
-                        queue.extend(unit_of_work.repo.collect_new_events())
+                        queue.extend(self.uow.repo.collect_new_events())
             except RetryError as ex:
                 logging.exception(f'Exception raised when handling {event}')
                 continue
