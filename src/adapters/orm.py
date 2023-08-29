@@ -12,8 +12,6 @@ from entrypoints.config import settings
 # engine = create_engine("sqlite+pysqlite:///:memory:", echo=True, connect_args={'check_same_thread':False},
 #                     poolclass=StaticPool) 
 engine = create_engine(url=f"postgresql://{settings.pg_oltp_api_user}:{settings.pg_oltp_api_password}@{settings.pg_oltp_api_host}:{settings.pg_oltp_api_port}", echo=True)
-# engine = create_engine(f"postgresql://postgres:example@postgres", echo=True)
-# print(f"postgresql://{settings.pg_oltp_api_user}:{settings.pg_oltp_api_password}@{settings.pg_oltp_api_host}:{settings.pg_oltp_api_port}")
 Session = sessionmaker(bind=engine, expire_on_commit=False, autoflush=False,)
 # Session().commit()
 mapper_registry = registry()
@@ -151,9 +149,9 @@ mapper_registry.map_imperatively(
     version_id_col = product_table.c.version
 )
 
-# mapper_registry.metadata.create_all(
-#     bind=(engine)
-# )
+mapper_registry.metadata.create_all(
+    bind=(engine)
+)
 
 @event.listens_for(model.Product, "load")
 def receive_load(product, _):

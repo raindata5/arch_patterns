@@ -4,7 +4,6 @@ from typing import (
     Any
 )
 
-
 from adapters.orm import Session
 import adapters.repository as repository
 import domain.model as model
@@ -34,10 +33,12 @@ from fastapi import (
     FastAPI,
     status,
     HTTPException,
-    Request
+    Request,
+    Form
 )
 from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
+from typing_extensions import Annotated
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -57,11 +58,13 @@ def read_root(request: Request):
 def batches(request: Request, batch_reference: str):
     uow_tmp = uow.unit_of_work(sql_repo)
     with uow_tmp as repo:
+        logging.info(msg=f"{batch_reference}")
+        print(batch_reference)
         queried_batch = repo.get(model.Batch, model.Batch.reference, batch_reference)
         sql_repo.commit()
     queried_batch: model.Batch
     return templates.TemplateResponse(
-        "batch.html", {"batch_ref": queried_batch.reference or 'NULL', "request": request}
+        "batch.html", {"batch_ref": queried_batch.reference, "request": request, "available_quantity": queried_batch.available_quantity}
     )
 
 @app.get("/batch/{batch_reference}")
@@ -74,7 +77,7 @@ def read_batch(batch_reference: str):
 
 @app.post("/batches",  status_code=status.HTTP_201_CREATED,)
 def add_batch_ep(batch_info: model.PreBatchInstance):
-    cmd_new = command.CreateBatch(**batch_info.dict())
+    cmd_new = command.CreateBatch(**batch_info.model_dump())
     inserted_batch = add_batch(command=cmd_new, unit_of_work=uow.unit_of_work(sql_repo))
     inserted_batch: model.Batch
     retrieved_batch = RedirectResponse(url=f"/batch/{inserted_batch.reference}", status_code=303)
@@ -84,7 +87,7 @@ def add_batch_ep(batch_info: model.PreBatchInstance):
 def allocate_batch_ep(order_reference: model.OrderReference, sku: model.Sku):
     #TODO: Allow the client to specify a sku
     try:
-        event_new = command.Allocate(**order_reference.dict(), **sku.dict())
+        event_new = command.Allocate(**order_reference.model_dump(), **sku.model_dump())
         best_batch = allocate(event_new, uow.unit_of_work(sql_repo))
     except InvalidOrderReference as ex :
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=F"No order found with the following order_reference {order_reference}")
@@ -103,10 +106,28 @@ def read_order_allocations(order_reference: str) -> list:
     )
     return JSONResponse({"allocations": list(results)})
 
+@app.get("/change_batch_quantity", response_class=HTMLResponse)
+def change_batch_quantity(request: Request):
+    return templates.TemplateResponse(
+        "change_batch_quantity.html",
+        {"request": request}
+    )
+
 @app.post("/change_batch_quantity", status_code=status.HTTP_201_CREATED,)
-def change_batch_quantity(batch_reference: model.ChangeBatchQuantityObj):
-    comm = command.ChangeBatchQuantity(**batch_reference.dict())
+def change_batch_quantity(
+    batch_reference: Annotated[str, Form(title="The reference number for the batch")],
+    sku: Annotated[str, Form(title="The sku number for the batch")],
+    new_quantity_offset: Annotated[int, Form(title="The offset for the batch available_quantity")]
+):
+    change_batch_quantity_form = {
+        "batch_reference": batch_reference,
+        "sku": sku,
+        "new_quantity_offset": new_quantity_offset
+    }
+    comm = command.ChangeBatchQuantity(**change_batch_quantity_form)
     idx = modify_batch_quantity(command=comm, unit_of_work=uow.unit_of_work(sql_repo))
+    retrieved_batch = RedirectResponse(url=f"/batches/{batch_reference}", status_code=303)
+    return retrieved_batch
 
 
 

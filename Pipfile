@@ -28,6 +28,7 @@ tenacity = "*"
 redis = "*"
 jinja2 = "*"
 pydantic-settings = "*"
+python-multipart = "*"
 
 [dev-packages]
 

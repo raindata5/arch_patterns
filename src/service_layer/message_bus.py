@@ -82,5 +82,46 @@ def handle(message: Message, unit_of_work:uow.unit_of_work):
 
 class MessageBus:
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, event_handlers, command_handlers, uow) -> None:
+        self.event_handlers = event_handlers
+        self.command_handlers = command_handlers
+        self.uow = uow
+
+    def handle(message: Message):
+        results = []
+        queue = [message]
+        while len(queue) > 0:
+            message_popped = queue.pop(0)
+            if isinstance(message_popped, command.Command):
+                obj = handle_command(message_popped, queue)
+                if obj:
+                    results.append(obj)
+            elif isinstance(message_popped, event.Event):
+                handle_event(message_popped, queue)
+                # obj = handle_event(message_popped, queue, unit_of_work)
+                # if obj:
+                #     results.append(obj)
+            else:
+                raise Exception(f"{message_popped} of type: {type(message_popped)} not supported")
+
+    def handle_command(command: command.Command, queue):
+        try:
+            handler = COMMAND_HANDLERS[type(command)]
+            obj = handler[0](command) 
+            queue.extend(unit_of_work.repo.collect_new_events())
+        except Exception as ex:
+            raise ex
+        return obj
+    return results
+
+    def handle_event(event: event.Event, queue):
+        for handler in EVENT_HANDLERS[type(event)]:
+            try:
+                for attempt in Retrying(stop=stop_after_attempt(3), wait=wait_exponential()):
+                    with attempt:
+                        logging.debug(f"Handling {event} with {handler}")
+                        obj = handler(event)
+                        queue.extend(unit_of_work.repo.collect_new_events())
+            except RetryError as ex:
+                logging.exception(f'Exception raised when handling {event}')
+                continue

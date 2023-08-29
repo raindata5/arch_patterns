@@ -7,6 +7,7 @@ from functools import (
 )
 from domain import utils, event
 from pydantic import BaseModel
+from fastapi import Form
 
 @dataclass(unsafe_hash=True)
 class OrderLine:
@@ -145,4 +146,7 @@ class PreBatchInstance(BaseModel):
 class ChangeBatchQuantityObj(BaseModel):
     batch_reference: str
     sku: str
-    new_quantity_offset: int
+    c: int
+
+# class ChangeBatchQuantityForm(BaseModel):
+#     batch_reference:
