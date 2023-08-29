@@ -40,11 +40,18 @@ def bootstrap(
     for event_type, event_handlers in  message_bus.EVENT_HANDLERS
     }
 
+    injected_command_handlers = {
+        event_type: [inject_dependencies(eh, dependencies) for eh in event_handlers]
+    for event_type, event_handlers in  message_bus.COMMAND_HANDLERS
+    }
+
     
 
     return {
         'mb': message_bus.MessageBus(
-        
+            injected_event_handlers,
+            injected_command_handlers,
+            uow
         ),
         'r': r
     }
