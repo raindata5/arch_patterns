@@ -1,0 +1,26 @@
+{% extends "index.html" %}
+
+{% block body %}
+
+    <h1>
+        Change Batch Quantity below 🙏
+    </h1>
+    <form class="form-horizontal" method="post" action="/change_batch_quantity">
+        <div class="form-group">
+            <label for="batch_reference">Enter your batch_reference: </label>
+            <input type="text" name="batch_reference">
+        </div>
+        <div class="form-group">
+            <label for="sku">Enter your sku: </label>
+            <input type="text" name="sku">
+        </div>
+        <div class="form-group">
+            <label for="new_quantity_offset">Enter your new_quantity_offset: </label>
+            <input type="number" name="new_quantity_offset">
+        </div>
+        <div class="form-group">
+            <input type="submit" value="Offset!">
+        </div>
+    </form>
+
+{% endblock %}
