@@ -85,7 +85,7 @@ class MessageBus:
     def __init__(self, event_handlers, command_handlers, uow) -> None:
         self.event_handlers = event_handlers
         self.command_handlers = command_handlers
-        self.uow = uow
+        self.uow: uow.unit_of_work = uow
 
     def handle(self, message: Message):
         results = []
@@ -93,29 +93,29 @@ class MessageBus:
         while len(queue) > 0:
             message_popped = queue.pop(0)
             if isinstance(message_popped, command.Command):
-                obj = handle_command(message_popped, queue)
+                obj = self.handle_command(message_popped, queue)
                 if obj:
                     results.append(obj)
             elif isinstance(message_popped, event.Event):
-                handle_event(message_popped, queue)
+                self.handle_event(message_popped, queue)
                 # obj = handle_event(message_popped, queue, unit_of_work)
                 # if obj:
                 #     results.append(obj)
             else:
                 raise Exception(f"{message_popped} of type: {type(message_popped)} not supported")
+        return results
 
     def handle_command(self, command: command.Command, queue):
         try:
-            handler = COMMAND_HANDLERS[type(command)]
+            handler = self.command_handlers[type(command)]
             obj = handler[0](command) 
             queue.extend(self.uow.repo.collect_new_events())
         except Exception as ex:
             raise ex
         return obj
-        return results
 
     def handle_event(self, event: event.Event, queue):
-        for handler in EVENT_HANDLERS[type(event)]:
+        for handler in self.event_handlers[type(event)]:
             try:
                 for attempt in Retrying(stop=stop_after_attempt(3), wait=wait_exponential()):
                     with attempt:

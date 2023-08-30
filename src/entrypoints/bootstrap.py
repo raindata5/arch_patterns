@@ -32,17 +32,18 @@ def bootstrap(
 
     dependencies = {
         "uow": uow,
+        "unit_of_work": uow,
         "r": r
     }
 
     injected_event_handlers = {
         event_type: [inject_dependencies(eh, dependencies) for eh in event_handlers]
-    for event_type, event_handlers in  message_bus.EVENT_HANDLERS
+    for event_type, event_handlers in  message_bus.EVENT_HANDLERS.items()
     }
 
     injected_command_handlers = {
-        event_type: [inject_dependencies(eh, dependencies) for eh in event_handlers]
-    for event_type, event_handlers in  message_bus.COMMAND_HANDLERS
+        command_type: [inject_dependencies(ch, dependencies) for ch in command_handlers]
+    for command_type, command_handlers in  message_bus.COMMAND_HANDLERS.items()
     }
 
     

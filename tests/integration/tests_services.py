@@ -1,6 +1,7 @@
 from adapters import (
     uow,
-    repository
+    repository,
+    orm
 )
 from typing import (
     List,
@@ -14,7 +15,16 @@ from service_layer import services, message_bus
 from domain import utils
 import datetime as dt
 import pytest
+from entrypoints import bootstrap
 
+@pytest.fixture()
+def bootstrap_message_bus():
+    message_bus = bootstrap.bootstrap(
+        create_from_metadata = False,
+        uow = uow.unit_of_work(repository.FakeRepository([], []))
+    )
+    yield message_bus
+    # orm.mapper_registry.metadata.drop_all()
 
 def sample_business_objects():
     sku_ref_natty, sku_ref_natty_01 = utils.random_sku("NaTTY"), utils.random_sku("NaTTY_01")
@@ -35,23 +45,29 @@ def sample_business_objects():
     list_ol: List[model.OrderLine]
     return product_nat, order_nat, list_ol
 
-def test_allocate_batch():
+def test_allocate_batch(bootstrap_message_bus):
     product_nat, order_nat, list_ol = sample_business_objects()
     product_nat_02, order_nat_02, list_ol_02 = sample_business_objects()
-    repo_fake = repository.FakeRepository([product_nat, product_nat_02], [order_nat, order_nat_02])
-    uow_instance = uow.unit_of_work(repo_fake) 
+    mb: message_bus.MessageBus = bootstrap_message_bus.get("mb")
+    # repo_fake = repository.FakeRepository([product_nat, product_nat_02], [order_nat, order_nat_02])
+    mb.uow.repo.products = [product_nat, product_nat_02]
+    mb.uow.repo.orders = [order_nat, order_nat_02]
+    # uow_instance = uow.unit_of_work(repo_fake) 
     event_new = command.Allocate(
         order_reference=order_nat.order_reference,
         sku=list_ol[0].sku
     )
 
-    best_batch = services.allocate(
-        event_new,
-        uow_instance
+    # best_batch = services.allocate(
+    #     event_new,
+    #     uow_instance
+    # )
+    best_batch, *results = mb.handle(
+        event_new
     )
     assert best_batch.reference == product_nat.batches[0].reference
     assert best_batch.available_quantity == (best_batch.quantity - list_ol[0].quantity)
-    assert repo_fake.committed
+    assert  mb.uow.repo.committed
 
 def test_allocate_stock_returns_404_no_sku_found():
     product_nat, order_nat, list_ol = sample_business_objects()
