@@ -49,40 +49,35 @@ def test_allocate_batch(bootstrap_message_bus):
     product_nat, order_nat, list_ol = sample_business_objects()
     product_nat_02, order_nat_02, list_ol_02 = sample_business_objects()
     mb: message_bus.MessageBus = bootstrap_message_bus.get("mb")
-    # repo_fake = repository.FakeRepository([product_nat, product_nat_02], [order_nat, order_nat_02])
     mb.uow.repo.products = [product_nat, product_nat_02]
     mb.uow.repo.orders = [order_nat, order_nat_02]
-    # uow_instance = uow.unit_of_work(repo_fake) 
-    event_new = command.Allocate(
+    command_new = command.Allocate(
         order_reference=order_nat.order_reference,
         sku=list_ol[0].sku
     )
-
-    # best_batch = services.allocate(
-    #     event_new,
-    #     uow_instance
-    # )
     best_batch, *results = mb.handle(
-        event_new
+        command_new
     )
     assert best_batch.reference == product_nat.batches[0].reference
     assert best_batch.available_quantity == (best_batch.quantity - list_ol[0].quantity)
     assert  mb.uow.repo.committed
 
-def test_allocate_stock_returns_404_no_sku_found():
+def test_allocate_stock_returns_404_no_sku_found(bootstrap_message_bus):
     product_nat, order_nat, list_ol = sample_business_objects()
-    repo = repository.FakeRepository([product_nat], [order_nat,])
-    uow_instance = uow.unit_of_work(repo) 
+    mb: message_bus.MessageBus = bootstrap_message_bus.get("mb")
+    mb.uow.repo.products = [product_nat,]
+    mb.uow.repo.orders = [order_nat,]
+
     list_ol[0].sku = 'fake_nat_sku'
-    event_new = command.Allocate(
+    command_new = command.Allocate(
         order_reference=order_nat.order_reference,
         sku=list_ol[0].sku
     )
     with pytest.raises(services.InvalidSkuReference) as ex:
-        results = services.allocate(
-            event_new,
-            uow_instance
+        best_batch, *results = mb.handle(
+            command_new
         )
+
     assert product_nat.batches[0].available_quantity == 30
 
 def test_allocate_stock_returns_no_stock():

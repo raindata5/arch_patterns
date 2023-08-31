@@ -34,7 +34,8 @@ client = TestClient(app)
 def test_read_main_root(get_sql_repo):
     res = client.get("/")
     assert res.status_code == 200
-    assert res.json() == {"msg": "Hello World"}
+    res_json = res.json()
+    assert res_json == {"msg": "Hello World"}
     print("Got the home page")
 
 def test_get_batch(return_base_sample_data):

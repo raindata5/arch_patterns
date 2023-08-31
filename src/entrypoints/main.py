@@ -39,6 +39,7 @@ from fastapi import (
 from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from typing_extensions import Annotated
+from entrypoints import bootstrap
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -48,15 +49,15 @@ app = FastAPI()
 
 templates = Jinja2Templates(directory="src/templates")
 
+bsed_deps = bootstrap.bootstrap()
+
 @app.get("/", response_class=HTMLResponse)
 def read_root(request: Request):
-    # return {"msg": "Hello World"}
-    # return HTMLResponse(content = '<button> click me </button>', status_code=200)
     return HTMLResponse(content = f'''<button> click me Mr.{request.headers.get('User-Agent')} </button>''', status_code=200)
 
 @app.get("/batches/{batch_reference}", response_class=HTMLResponse)
 def batches(request: Request, batch_reference: str):
-    uow_tmp = uow.unit_of_work(sql_repo)
+    uow_tmp = bsed_deps["mb"].uow
     with uow_tmp as repo:
         logging.info(msg=f"{batch_reference}")
         print(batch_reference)

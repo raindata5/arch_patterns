@@ -11,6 +11,7 @@ from adapters import (
 import adapters.repository as repository
 import inspect
 from functools import partial
+import redis
 
 def inject_dependencies(handler, dependencies: dict):
     sig = inspect.signature(handler)
@@ -22,8 +23,12 @@ def inject_dependencies(handler, dependencies: dict):
 
 def bootstrap(
         create_from_metadata = True,
-        uow = uow.unit_of_work(repository.SqlRepository(sessionmaker(bind=engine, expire_on_commit=False, autoflush=False,))),
-        r = repository.RedisClient(sessionmaker(bind=engine, expire_on_commit=False, autoflush=False,))
+        uow = uow.unit_of_work(
+            repository.SqlRepository(
+                sessionmaker(bind=engine, expire_on_commit=False, autoflush=False,)()
+            )
+        ),
+        r = repository.RedisClient(r=redis.Redis(host='redis',port=6379))
 ):
     if create_from_metadata == True:
         mapper_registry.metadata.create_all(

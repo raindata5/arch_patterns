@@ -149,9 +149,9 @@ mapper_registry.map_imperatively(
     version_id_col = product_table.c.version
 )
 
-mapper_registry.metadata.create_all(
-    bind=(engine)
-)
+# mapper_registry.metadata.create_all(
+#     bind=(engine)
+# )
 
 @event.listens_for(model.Product, "load")
 def receive_load(product, _):
