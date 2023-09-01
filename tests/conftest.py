@@ -83,8 +83,7 @@ def return_base_sample_data(get_sql_repo):
     ]
         product_nat.batches.append(batch_nat)
         list_ol = [order_nat.attach_order_line(ol) for ol in order_lines_params]
-        # new_batch.allocate_stock(ex_order)
-        # session.add_all([batch_nat, order_nat, product_nat])  
+
         session.add_all([ order_nat, product_nat])  
         session.commit()
     return product_nat, order_nat, list_ol

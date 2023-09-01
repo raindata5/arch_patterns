@@ -98,9 +98,6 @@ class MessageBus:
                     results.append(obj)
             elif isinstance(message_popped, event.Event):
                 self.handle_event(message_popped, queue)
-                # obj = handle_event(message_popped, queue, unit_of_work)
-                # if obj:
-                #     results.append(obj)
             else:
                 raise Exception(f"{message_popped} of type: {type(message_popped)} not supported")
         return results

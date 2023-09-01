@@ -34,25 +34,27 @@ client = TestClient(app)
 def test_read_main_root(get_sql_repo):
     res = client.get("/")
     assert res.status_code == 200
-    res_json = res.json()
-    assert res_json == {"msg": "Hello World"}
-    print("Got the home page")
+    res_content = res.content
+    res_content_str = str(res_content)
+    assert "click me Mr." in res_content_str
+
 
 def test_get_batch(return_base_sample_data):
-    # queried_batch = client.get("/batch", params="TKJ-23244")
-    batch_nat, order_nat, order_lines_params = return_base_sample_data
-    batch_nat: model.Batch
+    product_nat, order_nat, order_lines_params = return_base_sample_data
+    product_nat: model.Product
+    batch_nat = product_nat.batches[0]
     order_nat: model.Order
     data = requests.get(
         F"{settings.api_url}/batch/{batch_nat.reference}",
-
     )
-    data_json = data.json()
-    data_json
+    data_content = data.content
+    data_content_str = str(data_content)
+    assert batch_nat.reference in data_content_str
 
 def test_allocate_batch(return_base_sample_data):
     product_nat, order_nat, list_ol = return_base_sample_data
     product_nat: model.Product
+    batch_nat = product_nat.batches[0]
     order_nat: model.Order
 
     list_ol: List[model.OrderLine]
@@ -61,9 +63,10 @@ def test_allocate_batch(return_base_sample_data):
     order_ref_body = dict(order_reference=order_nat_ref,)
     data_sku_order = dict(order_reference=order_ref_body, sku=sku_body)
     res = requests.post(f"{settings.api_url}/allocate", json=data_sku_order)
+    res_json = res.json()
     assert res.status_code == 201
-    assert res.json()["reference"] == product_nat.batches[0].reference
-    assert res.json()["available_quantity"] == product_nat.batches[0].available_quantity - list_ol[0].quantity
+    assert res_json["reference"] == product_nat.batches[0].reference
+    assert res_json["available_quantity"] == product_nat.batches[0].available_quantity - list_ol[0].quantity
 
 # TODO: Migrate the following tests to service layer
 
@@ -108,17 +111,15 @@ def test_allocate_stock_returns_404_no_sku_found(return_base_sample_data, return
     assert res_text == text_str
 
 def test_add_batch_returns_201(get_sql_repo):
-    batch_body = dict(
+    batch_info = dict(
         sku="a_sku",
         quantity=30,
-        arrived=False
+        arrived=False,
+        eta=None
     )    
-    res = requests.post(f"{settings.api_url}/batches", json=batch_body)
-    res_json = res.json()
+    res = requests.post(f"{settings.api_url}/batches", json=batch_info)
     assert res.status_code == 200
-    assert res.json()["arrived"] == False
-    assert res.json()["available_quantity"] == batch_body["quantity"]
-    assert res.json()["sku"] == batch_body["sku"]
+
 
 
 def test_allocate_from_channel(return_base_sample_data,):

@@ -40,6 +40,7 @@ from fastapi.responses import JSONResponse, RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from typing_extensions import Annotated
 from entrypoints import bootstrap
+from service_layer.message_bus import MessageBus
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -55,7 +56,7 @@ bsed_deps = bootstrap.bootstrap()
 def read_root(request: Request):
     return HTMLResponse(content = f'''<button> click me Mr.{request.headers.get('User-Agent')} </button>''', status_code=200)
 
-@app.get("/batches/{batch_reference}", response_class=HTMLResponse)
+@app.get("/batch/{batch_reference}", response_class=HTMLResponse)
 def batches(request: Request, batch_reference: str):
     uow_tmp = bsed_deps["mb"].uow
     with uow_tmp as repo:
@@ -68,19 +69,13 @@ def batches(request: Request, batch_reference: str):
         "batch.html", {"batch_ref": queried_batch.reference, "request": request, "available_quantity": queried_batch.available_quantity}
     )
 
-@app.get("/batch/{batch_reference}")
-def read_batch(batch_reference: str):
-    uow_tmp = uow.unit_of_work(sql_repo)
-    with uow_tmp as repo:
-        queried_batch = repo.get(model.Batch, model.Batch.reference, batch_reference)
-        sql_repo.commit()
-    return queried_batch
 
 @app.post("/batches",  status_code=status.HTTP_201_CREATED,)
 def add_batch_ep(batch_info: model.PreBatchInstance):
     cmd_new = command.CreateBatch(**batch_info.model_dump())
-    inserted_batch = add_batch(command=cmd_new, unit_of_work=uow.unit_of_work(sql_repo))
-    inserted_batch: model.Batch
+    message_bus_client: MessageBus = bsed_deps["mb"]
+    results = message_bus_client.handle(cmd_new)
+    inserted_batch: model.Batch = results[0]
     retrieved_batch = RedirectResponse(url=f"/batch/{inserted_batch.reference}", status_code=303)
     return retrieved_batch
 
@@ -88,8 +83,11 @@ def add_batch_ep(batch_info: model.PreBatchInstance):
 def allocate_batch_ep(order_reference: model.OrderReference, sku: model.Sku):
     #TODO: Allow the client to specify a sku
     try:
-        event_new = command.Allocate(**order_reference.model_dump(), **sku.model_dump())
-        best_batch = allocate(event_new, uow.unit_of_work(sql_repo))
+        cmd_new = command.Allocate(**order_reference.model_dump(), **sku.model_dump())
+        message_bus_client: MessageBus = bsed_deps["mb"]
+        results = message_bus_client.handle(cmd_new)
+        best_batch = results[0]
+        # best_batch = allocate(event_new, uow.unit_of_work(sql_repo))
     except InvalidOrderReference as ex :
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=F"No order found with the following order_reference {order_reference}")
     except InvalidSkuReference as ex:
