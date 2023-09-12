@@ -42,11 +42,28 @@ from typing_extensions import Annotated
 from entrypoints import bootstrap
 from service_layer.message_bus import MessageBus
 
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 # TODO: Does this use the same session repeatedly? Should be instantiated in endpoint?
 sql_repo = repository.SqlRepository(Session())
 app = FastAPI()
+
+origins = [
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 templates = Jinja2Templates(directory="src/templates")
 
