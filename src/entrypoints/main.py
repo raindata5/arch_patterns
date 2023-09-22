@@ -44,7 +44,7 @@ from service_layer.message_bus import MessageBus
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+import json
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -71,7 +71,9 @@ bsed_deps = bootstrap.bootstrap()
 
 @app.get("/", response_class=HTMLResponse)
 def read_root(request: Request):
-    return HTMLResponse(content = f'''<button> click me Mr.{request.headers.get('User-Agent')} </button>''', status_code=200)
+    return templates.TemplateResponse(
+        'index.html', {"request": request.headers}
+    )
 
 @app.get("/batch/{batch_reference}", response_class=HTMLResponse)
 def batches(request: Request, batch_reference: str):

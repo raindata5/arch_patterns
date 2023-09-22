@@ -12,3 +12,6 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+config = {
+    'development': settings
+}

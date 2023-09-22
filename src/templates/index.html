@@ -1,11 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
-     {% block head %}
- <title>{% block title %}{% endblock %} - My Application</title>
- {% endblock %}
+    {% block head %}
+    <title>{% block title %}{% endblock %} - Gourmand</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="https://th.bing.com/th/id/R.90e901ad5a648cfd2ed38519d7422247?rik=%2baBW82Y1%2bie5aA&riu=http%3a%2f%2fvignette2.wikia.nocookie.net%2fclashroyale%2fimages%2fb%2fb2%2fSad_Face.png%2frevision%2flatest%3fcb%3d20160706235335&ehk=L9Sl2BZCQB8AShTJ7Q1QDG%2flGrkbnrFnk1JHHlxA%2b7A%3d&risl=&pid=ImgRaw&r=0">
+    {% endblock %}
 </head>
-
 <body>
     {% block body %}
+    <div>
+        <h2> Business Data Architecture</h2>
+        <p align="center">
+            <a href="#overview">Overview</a> •
+              <a href="#data-architecture-diagram">Data Architecture Diagram</a> •
+              <a href="#data-visualization">Data Visualization</a> •
+                <a href="#main-concepts">Main Concepts</a> •
+                <a href="#prerequisites">Prerequisites</a> •
+                <a href="#set-up">Set-up</a> •
+                <a href="#where-to-go-from-here">Where to go from here</a>•
+                <a href="#contact">Contact</a> •
+            </p>
+            <div>
+                <h3>Overview</h3>
+                <p>
+                    This project looks to leverage multiple tools to create a data architecture 
+                    that could help serve as the backend for a business and even the frontend 
+                    (more on this in due time). While the initial focus was simply only creating 
+                    a data pipeline to move the data from one source <em>x</em> to a data warehouse <em>y</em> 
+                    to run some analyses, the project has evolved to include a number of supplementary technologies
+                    features partially due to problems that arose out of the blue.
+                    Fortunately while there may not always be meer solutions to everything  
+                </p>
+
+            </div>
+    <p>
+        {{request}}
+    </p>
+    </div>
     {% endblock %}
+    <script>
+        console.log("ronald here")
+    </script>
 </body>
+</html>
+
    
